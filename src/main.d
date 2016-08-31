@@ -10,6 +10,9 @@ int main(string[] argv)
         return 1;
     }
     writeln("In console: width=", console.width, " height=", console.height);
+    console.textColor = TextColor.WHITE;
+    console.backgroundColor = TextColor.BLACK;
+    console.clearScreen();
     console.setCursor(10, 10);
     console.textColor = TextColor.MAGENTA;
     console.underline = true;
@@ -19,6 +22,10 @@ int main(string[] argv)
     console.writeText(" in ");
     console.backgroundColor = TextColor.BLACK;
     console.writeText("console");
+    console.setCursor(12, 12);
+    console.writeText("yet another text line");
+    console.setCursor(10, 10);
+    console.writeText("T");
     readln();
     return 0;
 }

@@ -28,6 +28,105 @@ enum TextColor : ubyte {
     WHITE,          // 15
 }
 
+struct ConsoleChar {
+    dchar ch;
+    uint  attr = 0xFFFFFFFF;
+}
+
+immutable ConsoleChar UNKNOWN_CHAR = ConsoleChar.init;
+
+struct ConsoleBuf {
+    protected int _width;
+    protected int _height;
+    protected int _cursorX;
+    protected int _cursorY;
+    protected ConsoleChar[] _chars;
+
+
+    @property int width() { return _width; }
+    @property int height() { return _height; }
+    @property int cursorX() { return _cursorX; }
+    @property int cursorY() { return _cursorY; }
+
+    void clear(ConsoleChar ch) {
+        _chars[0 .. $] = ch;
+    }
+    void copyFrom(ref ConsoleBuf buf) {
+        _width = buf._width;
+        _height = buf._height;
+        _cursorX = buf._cursorX;
+        _cursorY = buf._cursorY;
+        _chars.length = buf._chars.length;
+        for(int i = 0; i < _chars.length; i++)
+            _chars[i] = buf._chars[i];
+    }
+    void set(int x, int y, ConsoleChar ch) {
+        _chars[y * _width + x] = ch;
+    }
+    ConsoleChar get(int x, int y) {
+        return _chars[y * _width + x];
+    }
+    ConsoleChar[] line(int y) {
+        return _chars[y * _width .. (y + 1) * _width];
+    }
+    void resize(int w, int h) {
+        if (_width != w || _height != h) {
+            _chars.length = w * h;
+            _width = w;
+            _height = h;
+        }
+        _cursorX = 0;
+        _cursorY = 0;
+        _chars[0 .. $] = UNKNOWN_CHAR;
+    }
+    void scrollUp(uint attr) {
+        for (int i = 0; i + 1 < _height; i++) {
+            _chars[i * _width .. (i + 1) * _width] = _chars[(i + 1) * _width .. (i + 2) * _width];
+        }
+        _chars[(_height - 1) * _width .. _height * _width] = ConsoleChar(' ', attr);
+    }
+    void setCursor(int x, int y) {
+        _cursorX = x;
+        _cursorY = y;
+    }
+    void writeChar(dchar ch, uint attr) {
+        if (_cursorX >= _width) {
+            _cursorY++;
+            _cursorX = 0;
+            if (_cursorY >= _height) {
+                _cursorY = _height - 1;
+                scrollUp(attr);
+            }
+        }
+        if (ch == '\n') {
+            _cursorX = 0;
+            _cursorY++;
+            if (_cursorY >= _height) {
+                scrollUp(attr);
+                _cursorY = _height - 1;
+            }
+            return;
+        }
+        if (ch == '\r') {
+            _cursorX = 0;
+            return;
+        }
+        set(_cursorX, _cursorY, ConsoleChar(ch, attr));
+        _cursorX++;
+        if (_cursorX >= _width) {
+            if (_cursorY < _height - 1) {
+                _cursorY++;
+                _cursorX = 0;
+            }
+        }
+    }
+    void write(dstring str, uint attr) {
+        for (int i = 0; i < str.length; i++) {
+            writeChar(str[i], attr);
+        }
+    }
+}
+
 /// console I/O support
 class Console {
     private int _cursorX;
@@ -35,10 +134,16 @@ class Console {
     private int _width;
     private int _height;
 
+    private ConsoleBuf _buf;
+    private ConsoleBuf _batchBuf;
+    private uint _consoleAttr;
+
     @property int width() { return _width; }
     @property int height() { return _height; }
     @property int cursorX() { return _cursorX; }
     @property int cursorY() { return _cursorY; }
+    @property void cursorX(int x) { _cursorX = x; }
+    @property void cursorY(int y) { _cursorY = y; }
 
     version(Windows) {
         HANDLE _hstdin;
@@ -70,25 +175,52 @@ class Console {
             _backgroundColor = (_attr & 0xF0) >> 4;
             _underline = (_attr & COMMON_LVB_UNDERSCORE) != 0;
             //writeln("csbi=", csbi);
-            return true;
         } else {
         }
+        _buf.resize(_width, _height);
+        _batchBuf.resize(_width, _height);
+        return true;
     }
 
     /// clear screen and set cursor position to 0,0
     void clearScreen() {
-        version(Windows) {
-        } else {
+        calcAttributes();
+        _batchBuf.clear(ConsoleChar(' ', _consoleAttr));
+        if (!_batchMode) {
+            _buf.clear(ConsoleChar(' ', _consoleAttr));
+            version(Windows) {
+                DWORD charsWritten;
+                FillConsoleOutputCharacter(_hstdout, ' ', _width * _height, COORD(0, 0), &charsWritten);
+                FillConsoleOutputAttribute(_hstdout, _attr, _width * _height, COORD(0, 0), &charsWritten);
+                setCursor(0, 0);
+            } else {
+            }
         }
     }
 
     /// set cursor position
     void setCursor(int x, int y) {
-        version(Windows) {
-            SetConsoleCursorPosition(_hstdout, COORD(cast(short)x, cast(short)y));
-            _cursorX = x;
-            _cursorY = y;
+        if (!_batchMode) {
+            _buf.cursorX = x;
+            _buf.cursorY = y;
+            version(Windows) {
+                SetConsoleCursorPosition(_hstdout, COORD(cast(short)x, cast(short)y));
+            } else {
+            }
         } else {
+        }
+        _cursorX = x;
+        _cursorY = y;
+    }
+
+    /// flush batched updates
+    void flush() {
+        version(Windows) {
+        } else {
+        }
+        if (_batchMode) {
+
+            _batchBuf.clear(ConsoleChar.init);
         }
     }
 
@@ -97,18 +229,41 @@ class Console {
         if (!str.length)
             return;
         updateAttributes();
-        version(Windows) {
-            import std.utf;
-            wstring s16 = toUTF16(str);
-            DWORD charsWritten;
-            WriteConsole(_hstdout, s16.ptr, s16.length, &charsWritten, null);
-            _cursorX += s16.length;
-            while(_cursorX >= _width) {
-                _cursorX -= _width;
-                _cursorY++;
-                if (_cursorY >= _height)
-                    _cursorY = _height - 1;
+        if (!_batchMode) {
+            // no batch mode, write directly to screen
+            _buf.write(str, _consoleAttr);
+            version(Windows) {
+                import std.utf;
+                wstring s16 = toUTF16(str);
+                DWORD charsWritten;
+                WriteConsole(_hstdout, s16.ptr, s16.length, &charsWritten, null);
+                _cursorX += s16.length;
+                while(_cursorX >= _width) {
+                    _cursorX -= _width;
+                    _cursorY++;
+                    if (_cursorY >= _height)
+                        _cursorY = _height - 1;
+                }
+            } else {
             }
+            _cursorX = _buf.cursorX;
+            _cursorY = _buf.cursorY;
+        } else {
+            // batch mode
+            _batchBuf.write(str, _consoleAttr);
+            _cursorX = _batchBuf.cursorX;
+            _cursorY = _batchBuf.cursorY;
+        }
+    }
+
+    protected void calcAttributes() {
+        _consoleAttr = cast(uint)_textColor | (cast(uint)_backgroundColor << 8) | (_underline ? 0x10000 : 0);
+        version(Windows) {
+            _attr = cast(WORD) (
+                _textColor
+                | (_backgroundColor << 4)
+                | (_underline ? COMMON_LVB_UNDERSCORE : 0)
+            );
         } else {
         }
     }
@@ -116,15 +271,27 @@ class Console {
     protected void updateAttributes() {
         if (_dirtyAttributes) {
             version(Windows) {
-                _attr = cast(WORD) (
-                    _textColor
-                    | (_backgroundColor << 4)
-                    | (_underline ? COMMON_LVB_UNDERSCORE : 0)
-                );
+                calcAttributes();
                 SetConsoleTextAttribute(_hstdout, _attr);
             } else {
             }
             _dirtyAttributes = false;
+        }
+    }
+
+    protected bool _batchMode;
+    @property bool batchMode() { return _batchMode; }
+    @property void batchMode(bool batch) { 
+        if (_batchMode == batch)
+            return;
+        if (batch) {
+            // batch mode turned ON
+            _batchBuf.clear(ConsoleChar.init);
+            _batchMode = true;
+        } else {
+            // batch mode turned OFF
+            flush();
+            _batchMode = false;
         }
     }
 
