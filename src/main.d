@@ -10,6 +10,7 @@ int main(string[] argv)
         return 1;
     }
     writeln("In console: width=", console.width, " height=", console.height);
+    console.batchMode = true;
     console.textColor = TextColor.WHITE;
     console.backgroundColor = TextColor.BLACK;
     console.clearScreen();
@@ -26,6 +27,13 @@ int main(string[] argv)
     console.writeText("yet another text line");
     console.setCursor(10, 10);
     console.writeText("T");
+    console.flush();
+    console.textColor = TextColor.WHITE;
+    console.setCursor(14, 14);
+    console.writeText("one more text line #14");
+    console.setCursor(14, 15);
+    console.writeText("one more text line #15");
+    console.flush();
     readln();
     return 0;
 }

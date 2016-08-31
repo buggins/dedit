@@ -185,29 +185,28 @@ class Console {
     /// clear screen and set cursor position to 0,0
     void clearScreen() {
         calcAttributes();
-        _batchBuf.clear(ConsoleChar(' ', _consoleAttr));
         if (!_batchMode) {
             _buf.clear(ConsoleChar(' ', _consoleAttr));
             version(Windows) {
                 DWORD charsWritten;
                 FillConsoleOutputCharacter(_hstdout, ' ', _width * _height, COORD(0, 0), &charsWritten);
                 FillConsoleOutputAttribute(_hstdout, _attr, _width * _height, COORD(0, 0), &charsWritten);
-                setCursor(0, 0);
             } else {
             }
+        } else {
+            _batchBuf.clear(ConsoleChar(' ', _consoleAttr));
         }
+        setCursor(0, 0);
     }
+
 
     /// set cursor position
     void setCursor(int x, int y) {
         if (!_batchMode) {
-            _buf.cursorX = x;
-            _buf.cursorY = y;
-            version(Windows) {
-                SetConsoleCursorPosition(_hstdout, COORD(cast(short)x, cast(short)y));
-            } else {
-            }
+            _buf.setCursor(x, y);
+            rawSetCursor(x, y);
         } else {
+            _batchBuf.setCursor(x, y);
         }
         _cursorX = x;
         _cursorY = y;
@@ -215,12 +214,33 @@ class Console {
 
     /// flush batched updates
     void flush() {
-        version(Windows) {
-        } else {
-        }
         if (_batchMode) {
-
+            for (int i = 0; i < _batchBuf.height; i++) {
+                ConsoleChar[] batchLine = _batchBuf.line(i);
+                ConsoleChar[] bufLine = _buf.line(i);
+                for (int x = 0; x < _batchBuf.width; x++) {
+                    if (batchLine[x] != ConsoleChar.init && batchLine[x] != bufLine[x]) {
+                        // found non-empty sequence
+                        int xx = 1;
+                        dchar[] str;
+                        str ~= batchLine[x].ch;
+                        bufLine[x] = batchLine[x];
+                        uint firstAttr = batchLine[x].attr;
+                        for ( ; x + xx < _batchBuf.width; xx++) {
+                            if (batchLine[x + xx] == ConsoleChar.init || batchLine[x + xx].attr != firstAttr)
+                                break;
+                            str ~= batchLine[x + xx].ch;
+                            bufLine[x + xx] = batchLine[x + xx];
+                        }
+                        rawSetCursor(x, i);
+                        rawSetAttributes(firstAttr);
+                        rawWriteText(cast(dstring)str);
+                        x += xx - 1;
+                    }
+                }
+            }
             _batchBuf.clear(ConsoleChar.init);
+            rawSetCursor(_cursorX, _cursorY);
         }
     }
 
@@ -232,20 +252,7 @@ class Console {
         if (!_batchMode) {
             // no batch mode, write directly to screen
             _buf.write(str, _consoleAttr);
-            version(Windows) {
-                import std.utf;
-                wstring s16 = toUTF16(str);
-                DWORD charsWritten;
-                WriteConsole(_hstdout, s16.ptr, s16.length, &charsWritten, null);
-                _cursorX += s16.length;
-                while(_cursorX >= _width) {
-                    _cursorX -= _width;
-                    _cursorY++;
-                    if (_cursorY >= _height)
-                        _cursorY = _height - 1;
-                }
-            } else {
-            }
+            rawWriteText(str);
             _cursorX = _buf.cursorX;
             _cursorY = _buf.cursorY;
         } else {
@@ -253,6 +260,38 @@ class Console {
             _batchBuf.write(str, _consoleAttr);
             _cursorX = _batchBuf.cursorX;
             _cursorY = _batchBuf.cursorY;
+        }
+    }
+
+    protected void rawSetCursor(int x, int y) {
+        version(Windows) {
+            SetConsoleCursorPosition(_hstdout, COORD(cast(short)x, cast(short)y));
+        } else {
+        }
+    }
+
+    protected void rawWriteText(dstring str) {
+        version(Windows) {
+            import std.utf;
+            wstring s16 = toUTF16(str);
+            DWORD charsWritten;
+            WriteConsole(_hstdout, s16.ptr, s16.length, &charsWritten, null);
+        } else {
+        }
+    }
+
+    protected void rawSetAttributes(uint attr) {
+        version(Windows) {
+            WORD newattr = cast(WORD) (
+                (attr & 0x0F)
+                | (((attr >> 8) & 0x0F) << 4)
+                | (((attr >> 16) & 1) ? COMMON_LVB_UNDERSCORE : 0)
+            );
+            if (newattr != _attr) {
+                _attr = newattr;
+                SetConsoleTextAttribute(_hstdout, _attr);
+            }
+        } else {
         }
     }
 
