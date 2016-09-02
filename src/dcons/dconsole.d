@@ -8,6 +8,8 @@ version(Windows) {
     import core.sys.windows.winuser;
     private import core.sys.windows.basetyps, core.sys.windows.w32api, core.sys.windows.winnt;
 }
+import dlangui.core.signals;
+import dlangui.core.events;
 
 enum TextColor : ubyte {
     BLACK,          // 0
@@ -365,4 +367,31 @@ class Console {
             _dirtyAttributes = true;
         }
     }
+
+    /// mouse event signal
+    Signal!OnMouseEvent mouseEvent;
+    /// keyboard event signal
+    Signal!OnKeyEvent keyEvent;
+
+    protected bool handleKeyEvent(KeyEvent event) {
+        if (keyEvent.assigned)
+            return keyEvent(event);
+        return false;
+    }
+    protected bool handleMouseEvent(MouseEvent event) {
+        if (mouseEvent.assigned)
+            return mouseEvent(event);
+        return false;
+    }
 }
+
+/// interface - slot for onMouse
+interface OnMouseEvent {
+    bool onMouse(MouseEvent event);
+}
+
+/// interface - slot for onKey
+interface OnKeyEvent {
+    bool onKey(KeyEvent event);
+}
+

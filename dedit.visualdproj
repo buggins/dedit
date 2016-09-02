@@ -415,6 +415,52 @@
   <Folder name="dedit">
    <File path="src\dedit\deditor.d" />
   </Folder>
+  <Folder name="dlangui">
+   <Folder name="core">
+    <File path="src\dlangui\core\asyncsocket.d" />
+    <File path="src\dlangui\core\collections.d" />
+    <File path="src\dlangui\core\config.d" />
+    <File path="src\dlangui\core\editable.d" />
+    <File path="src\dlangui\core\events.d" />
+    <File path="src\dlangui\core\files.d" />
+    <File path="src\dlangui\core\i18n.d" />
+    <File path="src\dlangui\core\linestream.d" />
+    <File path="src\dlangui\core\logger.d" />
+    <File path="src\dlangui\core\parseutils.d" />
+    <File path="src\dlangui\core\queue.d" />
+    <File path="src\dlangui\core\settings.d" />
+    <File path="src\dlangui\core\signals.d" />
+    <File path="src\dlangui\core\stdaction.d" />
+    <File path="src\dlangui\core\streams.d" />
+    <File path="src\dlangui\core\types.d" />
+   </Folder>
+   <Folder name="dialogs">
+    <File path="src\dlangui\dialogs\dialog.d" />
+    <File path="src\dlangui\dialogs\msgbox.d" />
+   </Folder>
+   <Folder name="dml">
+    <File path="src\dlangui\dml\annotations.d" />
+   </Folder>
+   <Folder name="graphics">
+    <File path="src\dlangui\graphics\colors.d" />
+    <File path="src\dlangui\graphics\drawbuf.d" />
+    <File path="src\dlangui\graphics\fonts.d" />
+    <File path="src\dlangui\graphics\resources.d" />
+   </Folder>
+   <Folder name="platforms">
+    <Folder name="common">
+     <File path="src\dlangui\platforms\common\platform.d" />
+    </Folder>
+   </Folder>
+   <Folder name="widgets">
+    <File path="src\dlangui\widgets\controls.d" />
+    <File path="src\dlangui\widgets\layouts.d" />
+    <File path="src\dlangui\widgets\popup.d" />
+    <File path="src\dlangui\widgets\styles.d" />
+    <File path="src\dlangui\widgets\widget.d" />
+    <File path="src\dlangui\widgets\winframe.d" />
+   </Folder>
+  </Folder>
   <File path="src\main.d" />
  </Folder>
 </DProject>
