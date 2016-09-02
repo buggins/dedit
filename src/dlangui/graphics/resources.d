@@ -94,7 +94,7 @@ import dlangui.core.config;
 
 import dlangui.core.logger;
 import dlangui.core.types;
-static if (DLANGUI_GUI) {
+static if (BACKEND_GUI) {
     import dlangui.graphics.images;
 }
 import dlangui.graphics.colors;
@@ -805,7 +805,7 @@ alias DrawableRef = Ref!Drawable;
 
 
 
-static if (DLANGUI_GUI) {
+static if (BACKEND_GUI) {
 /// decoded raster images cache (png, jpeg) -- access by filenames
 class ImageCache {
 
@@ -1000,7 +1000,7 @@ class DrawableCache {
                     // color reference #AARRGGBB, e.g. #5599AA, or FrameDrawable description string #frameColor,frameSize,#innerColor
                     _drawable = createColorDrawable(_filename);
                 } else {
-                    static if (DLANGUI_GUI) {
+                    static if (BACKEND_GUI) {
                         // PNG/JPEG drawables support
                         DrawBufRef image = imageCache.get(_filename);
                         if (!image.isNull) {
@@ -1041,7 +1041,7 @@ class DrawableCache {
                     // color reference #AARRGGBB, e.g. #5599AA, or FrameDrawable description string #frameColor,frameSize,#innerColor
                     _drawable = createColorDrawable(_filename);
                 } else {
-                    static if (DLANGUI_GUI) {
+                    static if (BACKEND_GUI) {
                         // PNG/JPEG drawables support
                         DrawBufRef image = imageCache.get(_filename, transform);
                         if (!image.isNull) {
@@ -1174,7 +1174,7 @@ class DrawableCache {
         Log.w("resource ", id, " is not found");
         return null;
     }
-    static if (DLANGUI_GUI) {
+    static if (BACKEND_GUI) {
         /// get image (DrawBuf) from imageCache by resource id
         DrawBufRef getImage(string id) {
             DrawBufRef res;

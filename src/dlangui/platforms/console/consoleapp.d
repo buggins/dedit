@@ -1,16 +1,25 @@
 module dlangui.platforms.console.consoleapp;
 
+import dlangui.core.logger;
 import dlangui.platforms.common.platform;
 import dlangui.graphics.drawbuf;
+import dlangui.graphics.fonts;
+import dlangui.widgets.styles;
+import dlangui.platforms.console.consolefont;
 private import dcons.dconsole;
 
 class ConsoleWindow : Window {
     ConsolePlatform _platform;
-    this(ConsolePlatform platform) {
+    ConsoleWindow _parent;
+    this(ConsolePlatform platform, dstring caption, Window parent, uint flags) {
         _platform = platform;
+        _parent = cast(ConsoleWindow)parent;
+        _dx = _platform.console.width;
+        _dy = _platform.console.height;
     }
     /// show window
     override void show() {
+        _visible = true;
     }
     private dstring _windowCaption;
     /// returns window caption
@@ -27,25 +36,57 @@ class ConsoleWindow : Window {
     }
     /// request window redraw
     override void invalidate() {
-        // TODO
+        _platform.redraw();
     }
     /// close window
     override void close() {
-        // TODO
+        Log.d("ConsoleWindow.close()");
+        _platform.closeWindow(this);
+    }
+    protected bool _visible;
+    /// returns true if window is shown
+    @property bool visible() {
+        return _visible;
     }
 }
 
 class ConsolePlatform : Platform {
     protected Console _console;
+
+    @property Console console() { return _console; }
+
     protected ConsoleDrawBuf _drawBuf;
     this() {
         _console = new Console();
+        _console.batchMode = true;
         _console.keyEvent = &onConsoleKey;
         _console.mouseEvent = &onConsoleMouse;
         _console.resizeEvent = &onConsoleResize;
+        _console.inputIdleEvent = &onInputIdle;
         _console.init();
         _drawBuf = new ConsoleDrawBuf(_console);
     }
+
+    ConsoleWindow[] _windowList;
+
+    /**
+    * create window
+    * Args:
+    *         windowCaption = window caption text
+    *         parent = parent Window, or null if no parent
+    *         flags = WindowFlag bit set, combination of Resizable, Modal, Fullscreen
+    *      width = window width 
+    *      height = window height
+    * 
+    * Window w/o Resizable nor Fullscreen will be created with size based on measurement of its content widget
+    */
+    override Window createWindow(dstring windowCaption, Window parent, uint flags = WindowFlag.Resizable, uint width = 0, uint height = 0) {
+        ConsoleWindow res = new ConsoleWindow(this, windowCaption, parent, flags);
+        _windowList ~= res;
+        return res;
+    }
+
+
     @property DrawBuf drawBuf() { return _drawBuf; }
     protected bool onConsoleKey(KeyEvent event) {
         return false;
@@ -54,6 +95,21 @@ class ConsolePlatform : Platform {
         return false;
     }
     protected bool onConsoleResize(int width, int height) {
+        foreach(w; _windowList) {
+            w.onResize(width, height);
+        }
+        return false;
+    }
+    protected void redraw() {
+        foreach(w; _windowList) {
+            if (w.visible) {
+                w.onDraw(_drawBuf);
+            }
+        }
+    }
+    protected bool onInputIdle() {
+        redraw();
+        _console.flush();
         return false;
     }
 
@@ -71,6 +127,10 @@ class ConsolePlatform : Platform {
     * When returned from this method, application is shutting down.
     */
     override int enterMessageLoop() {
+        while (_console.pollInput()) {
+            if (_windowList.length == 0)
+                break;
+        }
         // TODO
         return 0;
     }
@@ -97,6 +157,7 @@ class ConsoleDrawBuf : DrawBuf {
 
     this(Console console) {
         _console = console;
+        resetClipping();
     }
 
     ~this() {
@@ -130,11 +191,81 @@ class ConsoleDrawBuf : DrawBuf {
     /// fill the whole buffer with solid color (no clipping applied)
     override void fill(uint color) {
         // TODO
+        Log.d("fill");
     }
+
+    private struct RGB {
+        int r;
+        int g;
+        int b;
+        int match(int rr, int gg, int bb) immutable {
+            int dr = rr - r;
+            int dg = gg - g;
+            int db = bb - b;
+            if (dr < 0) dr = -dr;
+            if (dg < 0) dg = -dg;
+            if (db < 0) db = -db;
+            return dr + dg + db;
+        }
+    }
+    static immutable RGB CONSOLE_COLORS_RGB[16] = [
+        RGB(0,0,0),
+        RGB(0,0,128),
+        RGB(0,128,0),
+        RGB(0,128,128),
+        RGB(128,0,0),
+        RGB(128,0,128),
+        RGB(128,128,0),
+        RGB(128,128,128),
+        RGB(192,192,192),
+        RGB(0,0,255),
+        RGB(0,255,0),
+        RGB(0,255,255),
+        RGB(255,0,0),
+        RGB(255,0,255),
+        RGB(255,255,0),
+        RGB(255,255,255),
+    ];
+
+    static ubyte toConsoleColor(uint color) {
+        int r = (color >> 16) & 0xFF;
+        int g = (color >> 8) & 0xFF;
+        int b = (color >> 0) & 0xFF;
+        int bestMatch = CONSOLE_COLORS_RGB[0].match(r,g,b);
+        int bestMatchIndex = 0;
+        for (int i = 1; i < 16; i++) {
+            int m = CONSOLE_COLORS_RGB[i].match(r,g,b);
+            if (m < bestMatch) {
+                bestMatch = m;
+                bestMatchIndex = i;
+            }
+        }
+        return cast(ubyte)bestMatchIndex;
+    }
+
+
+    static immutable dstring SPACE_STRING = 
+        "                                                                                                    "
+        "                                                                                                    "
+        "                                                                                                    "
+        "                                                                                                    "
+        "                                                                                                    ";
 
     /// fill rectangle with solid color (clipping is applied)
     override void fillRect(Rect rc, uint color) {
         // TODO
+        Log.d("fillRect");
+        uint alpha = color >> 24;
+        if (alpha >= 128)
+            return; // transparent
+        _console.backgroundColor = toConsoleColor(color);
+        if (applyClipping(rc)) {
+            int w = rc.width;
+            foreach(y; rc.top .. rc.bottom) {
+                _console.setCursor(rc.left, y);
+                _console.writeText(SPACE_STRING[0 .. w]);
+            }
+        }
     }
 
     /// fill rectangle with solid color and pattern (clipping is applied) 0=solid fill, 1 = dotted
@@ -168,3 +299,27 @@ class ConsoleDrawBuf : DrawBuf {
     }
 }
 
+// entry point for console app
+extern(C) int DLANGUImain(string[] args) {
+    initLogs();
+    Platform.setInstance(new ConsolePlatform());
+    FontManager.instance = new ConsoleFontManager();
+    initResourceManagers();
+
+    currentTheme = createDefaultTheme();
+    Log.i("Entering UIAppMain: ", args);
+    int result = -1;
+    try {
+        result = UIAppMain(args);
+        Log.i("UIAppMain returned ", result);
+    } catch (Exception e) {
+        Log.e("Abnormal UIAppMain termination");
+        Log.e("UIAppMain exception: ", e);
+    }
+
+    releaseResourcesOnAppExit();
+
+    Log.d("Exiting main");
+
+    return result;
+}

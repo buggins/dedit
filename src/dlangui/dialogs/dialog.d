@@ -87,7 +87,7 @@ class Dialog : VerticalLayout {
     /// set icon resource id
     @property Dialog windowIcon(string iconResourceId) {
         _icon = iconResourceId;
-        static if (DLANGUI_GUI) {
+        static if (BACKEND_GUI) {
             if (_window && _icon)
                 _window.windowIcon = drawableCache.getImage(_icon);
         }
@@ -200,7 +200,7 @@ class Dialog : VerticalLayout {
             _popup.flags(PopupFlags.Modal);
         } else {
             _window = Platform.instance.createWindow(_caption, _parentWindow, wflags, _initialWidth, _initialHeight);
-            static if (DLANGUI_GUI) {
+            static if (BACKEND_GUI) {
                 if (_window && _icon)
                     _window.windowIcon = drawableCache.getImage(_icon);
             }

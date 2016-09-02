@@ -1192,7 +1192,7 @@ class Window : CustomEventTarget {
         showMessageBox(UIString(title), UIString(message), actions, defaultActionIndex, handler);
     }
 
-    static if (DLANGUI_GUI) {
+    static if (BACKEND_GUI) {
         void showInputBox(UIString title, UIString message, dstring initialText, void delegate(dstring result) handler) {
             import dlangui.dialogs.inputbox;
             InputBox dlg = new InputBox(title, message, this, initialText, handler);
@@ -1527,37 +1527,49 @@ static if (ENABLE_OPENGL) {
     }
 }
 
-version (Windows) {
-    // to remove import
-    extern(Windows) int DLANGUIWinMain(void* hInstance, void* hPrevInstance,
-                                       char* lpCmdLine, int nCmdShow);
-} else {
+static if (BACKEND_CONSOLE) {
     // to remove import
     extern(C) int DLANGUImain(string[] args);
+} else {
+    version (Windows) {
+        // to remove import
+        extern(Windows) int DLANGUIWinMain(void* hInstance, void* hPrevInstance,
+                                           char* lpCmdLine, int nCmdShow);
+    } else {
+        // to remove import
+        extern(C) int DLANGUImain(string[] args);
+    }
 }
 
 /// put "mixin APP_ENTRY_POINT;" to main module of your dlangui based app
 mixin template APP_ENTRY_POINT() {
-    /// workaround for link issue when WinMain is located in library
-    version(Windows) {
-        extern (Windows) int WinMain(void* hInstance, void* hPrevInstance,
-                    char* lpCmdLine, int nCmdShow)
+    static if (BACKEND_CONSOLE) {
+        int main(string[] args)
         {
-            try {
-                int res = DLANGUIWinMain(hInstance, hPrevInstance,
-                                    lpCmdLine, nCmdShow);
-                return res;
-            } catch (Exception e) {
-                Log.e("Exception: ", e);
-                return 1;
-            }
+            return DLANGUImain(args);
         }
     } else {
-        version (Android) {
-        } else {
-            int main(string[] args)
+        /// workaround for link issue when WinMain is located in library
+        version(Windows) {
+            extern (Windows) int WinMain(void* hInstance, void* hPrevInstance,
+                                         char* lpCmdLine, int nCmdShow)
             {
-                return DLANGUImain(args);
+                try {
+                    int res = DLANGUIWinMain(hInstance, hPrevInstance,
+                                             lpCmdLine, nCmdShow);
+                    return res;
+                } catch (Exception e) {
+                    Log.e("Exception: ", e);
+                    return 1;
+                }
+            }
+        } else {
+            version (Android) {
+            } else {
+                int main(string[] args)
+                {
+                    return DLANGUImain(args);
+                }
             }
         }
     }

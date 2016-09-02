@@ -450,6 +450,7 @@
    <Folder name="platforms">
     <Folder name="common">
      <File path="src\dlangui\platforms\common\platform.d" />
+     <File path="src\dlangui\platforms\common\startup.d" />
     </Folder>
     <Folder name="console">
      <File path="src\dlangui\platforms\console\consoleapp.d" />

@@ -384,6 +384,8 @@ class Console {
     Signal!OnKeyEvent keyEvent;
     /// console size changed signal
     Signal!OnConsoleResize resizeEvent;
+    /// console input is idle
+    Signal!OnInputIdle inputIdleEvent;
 
     protected bool handleKeyEvent(KeyEvent event) {
         if (keyEvent.assigned)
@@ -399,6 +401,11 @@ class Console {
         resize(width, height);
         if (resizeEvent.assigned)
             return resizeEvent(width, height);
+        return false;
+    }
+    protected bool handleInputIdle() {
+        if (inputIdleEvent.assigned)
+            return inputIdleEvent();
         return false;
     }
     private ushort lastMouseFlags = 0;
@@ -495,6 +502,7 @@ class Console {
                         return false;
                     }
                 } else {
+                    handleInputIdle();
                     Sleep(1);
                 }
             } else {
@@ -519,4 +527,8 @@ interface OnKeyEvent {
 
 interface OnConsoleResize {
     bool onResize(int width, int height);
+}
+
+interface OnInputIdle {
+    bool onInputIdle();
 }
