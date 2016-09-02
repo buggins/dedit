@@ -184,6 +184,12 @@ class Console {
         return true;
     }
 
+    void resize(int width, int height) {
+        _buf.resize(width, height);
+        _batchBuf.resize(width, height);
+        clearScreen();
+    }
+
     /// clear screen and set cursor position to 0,0
     void clearScreen() {
         calcAttributes();
@@ -372,6 +378,8 @@ class Console {
     Signal!OnMouseEvent mouseEvent;
     /// keyboard event signal
     Signal!OnKeyEvent keyEvent;
+    /// console size changed signal
+    Signal!OnConsoleResize resizeEvent;
 
     protected bool handleKeyEvent(KeyEvent event) {
         if (keyEvent.assigned)
@@ -382,6 +390,97 @@ class Console {
         if (mouseEvent.assigned)
             return mouseEvent(event);
         return false;
+    }
+    protected bool handleConsoleResize(int width, int height) {
+        resize(width, height);
+        if (resizeEvent.assigned)
+            return resizeEvent(width, height);
+        return false;
+    }
+    private ushort lastMouseFlags = 0;
+    /// wait for input, handle input
+    bool pollInput() {
+        version(Windows) {
+            INPUT_RECORD record;
+            DWORD eventsRead;
+            if (PeekConsoleInput(_hstdin, &record, 1, &eventsRead)) {
+                if (eventsRead) {
+                    if (ReadConsoleInput(_hstdin, &record, 1, &eventsRead)) {
+                        switch (record.EventType) {
+                            case KEY_EVENT:
+
+                                break;
+                            case MOUSE_EVENT:
+                                short x = record.MouseEvent.dwMousePosition.X;
+                                short y = record.MouseEvent.dwMousePosition.Y;
+                                uint buttonState = record.MouseEvent.dwButtonState;
+                                uint keyState = record.MouseEvent.dwControlKeyState;
+                                uint eventFlags = record.MouseEvent.dwEventFlags;
+                                ushort flags = 0;
+                                if ((keyState & LEFT_ALT_PRESSED) || (keyState & RIGHT_ALT_PRESSED))
+                                    flags |= MouseFlag.Alt;
+                                if ((keyState & LEFT_CTRL_PRESSED) || (keyState & RIGHT_CTRL_PRESSED))
+                                    flags |= MouseFlag.Control;
+                                if (keyState & SHIFT_PRESSED)
+                                    flags |= MouseFlag.Shift;
+                                if (buttonState & FROM_LEFT_1ST_BUTTON_PRESSED)
+                                    flags |= MouseFlag.LButton;
+                                if (buttonState & FROM_LEFT_2ND_BUTTON_PRESSED)
+                                    flags |= MouseFlag.MButton;
+                                if (buttonState & RIGHTMOST_BUTTON_PRESSED)
+                                    flags |= MouseFlag.RButton;
+                                bool actionSent = false;
+                                if ((flags & MouseFlag.ButtonsMask) != (lastMouseFlags & MouseFlag.ButtonsMask)) {
+                                    MouseButton btn = MouseButton.None;
+                                    MouseAction action = MouseAction.Cancel;
+                                    if ((flags & MouseFlag.LButton) != (lastMouseFlags & MouseFlag.LButton)) {
+                                        btn = MouseButton.Left;
+                                        action = (flags & MouseFlag.LButton) ? MouseAction.ButtonDown : MouseAction.ButtonUp;
+                                        handleMouseEvent(new MouseEvent(action, btn, flags, cast(short)x, cast(short)y));
+                                    }
+                                    if ((flags & MouseFlag.RButton) != (lastMouseFlags & MouseFlag.RButton)) {
+                                        btn = MouseButton.Right;
+                                        action = (flags & MouseFlag.RButton) ? MouseAction.ButtonDown : MouseAction.ButtonUp;
+                                        handleMouseEvent(new MouseEvent(action, btn, flags, cast(short)x, cast(short)y));
+                                    }
+                                    if ((flags & MouseFlag.MButton) != (lastMouseFlags & MouseFlag.MButton)) {
+                                        btn = MouseButton.Middle;
+                                        action = (flags & MouseFlag.MButton) ? MouseAction.ButtonDown : MouseAction.ButtonUp;
+                                        handleMouseEvent(new MouseEvent(action, btn, flags, cast(short)x, cast(short)y));
+                                    }
+                                    if (action != MouseAction.Cancel)
+                                        actionSent = true;
+                                }
+                                if ((eventFlags & MOUSE_MOVED) && !actionSent) {
+                                    handleMouseEvent(new MouseEvent(MouseAction.Move, MouseButton.None, flags, cast(short)x, cast(short)y));
+                                    actionSent = true;
+                                }
+                                if (eventFlags & MOUSE_WHEELED) {
+                                    short delta = (cast(short)(buttonState >> 16));
+                                    handleMouseEvent(new MouseEvent(MouseAction.Wheel, MouseButton.None, flags, cast(short)x, cast(short)y, delta));
+                                    actionSent = true;
+                                }
+                                lastMouseFlags = flags;
+                                break;
+                            case WINDOW_BUFFER_SIZE_EVENT:
+                                handleConsoleResize(record.WindowBufferSizeEvent.dwSize.X, record.WindowBufferSizeEvent.dwSize.Y);
+                                break;
+                            default:
+                                break;
+                        }
+                    } else {
+                        return false;
+                    }
+                } else {
+                    Sleep(1);
+                }
+            } else {
+                DWORD err = GetLastError();
+                return false;
+            }
+        } else {
+        }
+        return true;
     }
 }
 
@@ -395,3 +494,6 @@ interface OnKeyEvent {
     bool onKey(KeyEvent event);
 }
 
+interface OnConsoleResize {
+    bool onResize(int width, int height);
+}

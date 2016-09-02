@@ -34,6 +34,8 @@ int main(string[] argv)
     console.setCursor(14, 15);
     console.writeText("one more text line #15");
     console.flush();
+    while (console.pollInput()) {
+    }
     readln();
     return 0;
 }
