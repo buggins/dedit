@@ -234,11 +234,11 @@ class Console {
         if (!_batchMode) {
             _buf.setCursor(x, y);
             rawSetCursor(x, y);
+            _cursorX = x;
+            _cursorY = y;
         } else {
             _batchBuf.setCursor(x, y);
         }
-        _cursorX = x;
-        _cursorY = y;
     }
 
     /// flush batched updates
@@ -270,10 +270,12 @@ class Console {
                     }
                 }
             }
-            _batchBuf.clear(ConsoleChar.init);
-            if (drawn) {
+            if (drawn || _cursorX != _batchBuf.cursorX || _cursorY != _batchBuf.cursorY) {
+                _cursorX = _batchBuf.cursorX;
+                _cursorY = _batchBuf.cursorY;
                 rawSetCursor(_cursorX, _cursorY);
             }
+            _batchBuf.clear(ConsoleChar.init);
         }
     }
 

@@ -213,6 +213,10 @@ class Window : CustomEventTarget {
             _mainWidget.window = this;
     }
 
+    protected Rect _caretRect;
+    @property void caretRect(Rect rc) { _caretRect = rc; }
+    @property Rect caretRect() { return _caretRect; }
+
     // Abstract methods : override in platform implementatino
 
     /// show window
