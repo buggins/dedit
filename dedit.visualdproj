@@ -453,6 +453,7 @@
     </Folder>
     <Folder name="console">
      <File path="src\dlangui\platforms\console\consoleapp.d" />
+     <File path="src\dlangui\platforms\console\consolefont.d" />
     </Folder>
    </Folder>
    <Folder name="widgets">
