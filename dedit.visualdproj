@@ -451,6 +451,9 @@
     <Folder name="common">
      <File path="src\dlangui\platforms\common\platform.d" />
     </Folder>
+    <Folder name="console">
+     <File path="src\dlangui\platforms\console\consoleapp.d" />
+    </Folder>
    </Folder>
    <Folder name="widgets">
     <File path="src\dlangui\widgets\controls.d" />

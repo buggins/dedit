@@ -185,9 +185,13 @@ class Console {
     }
 
     void resize(int width, int height) {
-        _buf.resize(width, height);
-        _batchBuf.resize(width, height);
-        clearScreen();
+        if (_width != width || _height != height) {
+            _buf.resize(width, height);
+            _batchBuf.resize(width, height);
+            _width = width;
+            _height = height;
+            clearScreen(); //??
+        }
     }
 
     /// clear screen and set cursor position to 0,0
