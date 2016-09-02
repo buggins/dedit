@@ -408,7 +408,26 @@ class Console {
                     if (ReadConsoleInput(_hstdin, &record, 1, &eventsRead)) {
                         switch (record.EventType) {
                             case KEY_EVENT:
-
+                                KeyAction action = record.KeyEvent.bKeyDown ? KeyAction.KeyDown : KeyAction.KeyUp;
+                                KeyCode keyCode = KeyCode.NONE;
+                                ushort flags = 0;
+                                uint keyState = record.KeyEvent.dwControlKeyState;
+                                if (keyState & LEFT_ALT_PRESSED)
+                                    flags |= KeyFlag.Alt | KeyFlag.LAlt;
+                                if (keyState & RIGHT_ALT_PRESSED)
+                                    flags |= KeyFlag.Alt | KeyFlag.RAlt;
+                                if (keyState & LEFT_CTRL_PRESSED)
+                                    flags |= KeyFlag.Control | KeyFlag.LControl;
+                                if (keyState & RIGHT_CTRL_PRESSED)
+                                    flags |= KeyFlag.Control | KeyFlag.RControl;
+                                if (keyState & SHIFT_PRESSED)
+                                    flags |= KeyFlag.Shift;
+                                keyCode = cast(KeyCode)record.KeyEvent.wVirtualKeyCode;
+                                dchar ch = record.KeyEvent.UnicodeChar;
+                                handleKeyEvent(new KeyEvent(action, keyCode, flags));
+                                if (action == KeyAction.KeyDown && ch) {
+                                    handleKeyEvent(new KeyEvent(KeyAction.Text, keyCode, flags, [ch]));
+                                }
                                 break;
                             case MOUSE_EVENT:
                                 short x = record.MouseEvent.dwMousePosition.X;

@@ -969,6 +969,7 @@ enum KeyFlag : uint {
 
 /// Key code constants for KeyEvent
 enum KeyCode : uint {
+    NONE = 0,
     /// backspace
     BACK = 8,
     /// tab
