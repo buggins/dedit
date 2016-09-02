@@ -98,22 +98,9 @@ class ConsoleFont : Font {
                 pwidths[i] = x;
                 continue; // skip '&' in hot key when measuring
             }
-            Glyph * glyph = getCharGlyph(pstr[i], true); // TODO: what is better
-            //auto measureEnd = std.datetime.Clock.currAppTick;
-            //auto duration = measureEnd - measureStart;
-            //if (duration.length > 10)
-            //    Log.d("ft measureText took ", duration.length, " ticks");
-            if (glyph is null) {
-                // if no glyph, use previous width - treat as zero width
-                pwidths[i] = x;
-                continue;
-            }
-            int w = x + glyph.width; // using advance
-            int w2 = x + glyph.originX + glyph.correctedBlackBoxX; // using black box
-            if (w < w2) // choose bigger value
-                w = w2;
+            int w = x + 1; // using advance
             pwidths[i] = w;
-            x += glyph.width;
+            x += 1;
             charsMeasured = i + 1;
             if (x > maxWidth)
                 break;
@@ -134,9 +121,14 @@ class ConsoleFont : Font {
     *      tabOffset = when string is drawn not from left position, use to move tab stops left/right
     *      textFlags = set of TextFlag bit fields
     ****************************************************************************************/
-    override void drawText(DrawBuf buf, int x, int y, const dchar[] text, uint color, int tabSize = 4, int tabOffset = 0, uint textFlags = 0) {
+    override void drawText(DrawBuf drawBuf, int x, int y, const dchar[] text, uint color, int tabSize = 4, int tabOffset = 0, uint textFlags = 0) {
         if (text.length == 0)
             return; // nothing to draw - empty text
+        import dlangui.platforms.console.consoleapp;
+        import dcons.dconsole;
+        ConsoleDrawBuf buf = cast(ConsoleDrawBuf)drawBuf;
+        if (!buf)
+            return;
         if (_textSizeBuffer.length < text.length)
             _textSizeBuffer.length = text.length;
         int charsMeasured = measureText(text, _textSizeBuffer, MAX_WIDTH_UNSPECIFIED, tabSize, tabOffset, textFlags);
@@ -149,6 +141,9 @@ class ConsoleFont : Font {
         bool underline = (textFlags & TextFlag.Underline) != 0;
         int underlineHeight = 1;
         int underlineY = y + _baseline + underlineHeight * 2;
+        buf.console.textColor = ConsoleDrawBuf.toConsoleColor(color);
+        buf.console.backgroundColor = CONSOLE_TRANSPARENT_BACKGROUND;
+        Log.d("drawText: (", x, ',', y, " '", text, "', color=", buf.console.textColor);
         foreach(int i; 0 .. charsMeasured) {
             dchar ch = text[i];
             if (ch == '&' && (textFlags & (TextFlag.UnderlineHotKeys | TextFlag.HotKeys | TextFlag.UnderlineHotKeysWhenAltPressed))) {
@@ -163,30 +158,27 @@ class ConsoleFont : Font {
                 continue; // far at left of clipping region
 
             if (underline) {
-                int xx2 = _textSizeBuffer[i];
+                //int xx2 = _textSizeBuffer[i];
                 // draw underline
-                if (xx2 > xx)
-                    buf.fillRect(Rect(x + xx, underlineY, x + xx2, underlineY + underlineHeight), color);
+                buf.console.underline = true;
+                //if (xx2 > xx)
+                //    buf.fillRect(Rect(x + xx, underlineY, x + xx2, underlineY + underlineHeight), color);
                 // turn off underline after hot key
-                if (!(textFlags & TextFlag.Underline))
-                    underline = false; 
+                if (!(textFlags & TextFlag.Underline)) {
+                    underline = false;
+                    buf.console.underline = false;
+                }
             }
 
             if (ch == ' ' || ch == '\t')
                 continue;
-            Glyph * glyph = getCharGlyph(ch);
-            if (glyph is null)
+            int gx = x + xx;
+            if (gx + 1 < clip.left)
                 continue;
-            if ( glyph.blackBoxX && glyph.blackBoxY ) {
-                int gx = x + xx + glyph.originX;
-                if (gx + glyph.correctedBlackBoxX < clip.left)
-                    continue;
-                buf.drawGlyph( gx,
-                               y + _baseline - glyph.originY,
-                              glyph,
-                              color);
-            }
+            buf.console.setCursor(gx, y);
+            buf.console.writeText(cast(dstring)(text[i .. i + 1]));
         }
+        buf.console.underline = false;
     }
 
     /*****************************************************************************************

@@ -1069,12 +1069,21 @@ Theme createDefaultTheme() {
         res.fontFace = "Verdana";
     }
     //res.fontFace = "Arial Narrow";
-    res.fontSize = 15; // TODO: choose based on DPI
-    Style button = res.createSubstyle(STYLE_BUTTON).backgroundImageId("btn_background").alignment(Align.Center).setMargins(5,5,5,5);
-    res.createSubstyle(STYLE_BUTTON_TRANSPARENT).backgroundImageId("btn_background_transparent").alignment(Align.Center);
-    res.createSubstyle(STYLE_BUTTON_LABEL).layoutWidth(FILL_PARENT).alignment(Align.Left|Align.VCenter);
-    res.createSubstyle(STYLE_BUTTON_IMAGE).alignment(Align.Center);
-    res.createSubstyle(STYLE_TEXT).setMargins(2,2,2,2).setPadding(1,1,1,1);
+    static if (BACKEND_CONSOLE) {
+        res.fontSize = 1; // TODO: choose based on DPI
+        Style button = res.createSubstyle(STYLE_BUTTON).backgroundImageId("btn_background").alignment(Align.Center).setMargins(0, 0, 0, 0);
+        res.createSubstyle(STYLE_BUTTON_TRANSPARENT).backgroundImageId("btn_background_transparent").alignment(Align.Center);
+        res.createSubstyle(STYLE_BUTTON_LABEL).layoutWidth(FILL_PARENT).alignment(Align.Left|Align.VCenter);
+        res.createSubstyle(STYLE_BUTTON_IMAGE).alignment(Align.Center);
+        res.createSubstyle(STYLE_TEXT).setMargins(0, 0, 0, 0).setPadding(0, 0, 0, 0);
+    } else {
+        res.fontSize = 15; // TODO: choose based on DPI
+        Style button = res.createSubstyle(STYLE_BUTTON).backgroundImageId("btn_background").alignment(Align.Center).setMargins(5,5,5,5);
+        res.createSubstyle(STYLE_BUTTON_TRANSPARENT).backgroundImageId("btn_background_transparent").alignment(Align.Center);
+        res.createSubstyle(STYLE_BUTTON_LABEL).layoutWidth(FILL_PARENT).alignment(Align.Left|Align.VCenter);
+        res.createSubstyle(STYLE_BUTTON_IMAGE).alignment(Align.Center);
+        res.createSubstyle(STYLE_TEXT).setMargins(2,2,2,2).setPadding(1,1,1,1);
+    }
     res.createSubstyle(STYLE_HSPACER).layoutWidth(FILL_PARENT).minWidth(5).layoutWeight(100);
     res.createSubstyle(STYLE_VSPACER).layoutHeight(FILL_PARENT).minHeight(5).layoutWeight(100);
     res.createSubstyle(STYLE_BUTTON_NOMARGINS).backgroundImageId("btn_background").alignment(Align.Center); // .setMargins(5,5,5,5)

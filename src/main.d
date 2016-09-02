@@ -54,6 +54,7 @@ version (DCONSOLE_TEST) {
     /// entry point for dlangui based application
     extern (C) int UIAppMain(string[] args) {
         // create window
+        Log.setLogLevel(LogLevel.Trace);
         Log.d("Creating window");
         if (!Platform.instance) {
             Log.e("Platform.instance is null!!!");
@@ -62,8 +63,11 @@ version (DCONSOLE_TEST) {
         Log.d("Window created");
 
         VerticalLayout layout = new VerticalLayout();
-        layout.addChild(new TextWidget(null, "Some text string"d));
-        layout.addChild(new TextWidget(null, "One another text string"d).backgroundColor(0x008000));
+        layout.margins = 2;
+        layout.backgroundColor = 0x800000;
+        layout.addChild(new TextWidget(null, "Some text string"d).backgroundColor(0x000080).textColor(0xFFFFFF));
+        layout.addChild(new TextWidget(null, "One another text string"d).backgroundColor(0x008000).textColor(0xC0C0C0));
+        layout.addChild(new TextWidget(null, "Third text string"d));
         window.mainWidget = layout;
 
         // show window

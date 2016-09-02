@@ -16,6 +16,7 @@ class ConsoleWindow : Window {
         _parent = cast(ConsoleWindow)parent;
         _dx = _platform.console.width;
         _dy = _platform.console.height;
+        backgroundColor = 0x808080;
     }
     /// show window
     override void show() {
@@ -103,6 +104,7 @@ class ConsolePlatform : Platform {
     protected void redraw() {
         foreach(w; _windowList) {
             if (w.visible) {
+                _drawBuf.fillRect(Rect(0, 0, w.width, w.height), w.backgroundColor);
                 w.onDraw(_drawBuf);
             }
         }
@@ -153,7 +155,8 @@ class ConsolePlatform : Platform {
 /// drawing buffer - image container which allows to perform some drawing operations
 class ConsoleDrawBuf : DrawBuf {
 
-    Console _console;
+    protected Console _console;
+    @property Console console() { return _console; }
 
     this(Console console) {
         _console = console;

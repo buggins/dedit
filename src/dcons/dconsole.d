@@ -30,9 +30,26 @@ enum TextColor : ubyte {
     WHITE,          // 15
 }
 
+immutable ubyte CONSOLE_TRANSPARENT_BACKGROUND = 0xFF;
+
 struct ConsoleChar {
     dchar ch;
     uint  attr = 0xFFFFFFFF;
+    @property ubyte backgroundColor() { return cast(ubyte)((attr >> 8) & 0xFF); }
+    @property void backgroundColor(ubyte b) { attr = (attr & 0xFFFF00FF) | ((cast(uint)b) << 8); }
+    @property ubyte textColor() { return cast(ubyte)((attr) & 0xFF); }
+    @property void textColor(ubyte b) { attr = (attr & 0xFFFFFF00) | ((cast(uint)b)); }
+    @property bool underline() { return (attr & 0x10000) != 0; }
+    @property void underline(bool b) { attr = (attr & ~0x10000); if (b) attr |= 0x10000; }
+    /// set value, supporting transparent background
+    void set(ConsoleChar v) {
+        if (v.backgroundColor == CONSOLE_TRANSPARENT_BACKGROUND) {
+            ch = v.ch;
+            textColor = v.textColor;
+            underline = v.underline;
+        } else
+            this = v;
+    }
 }
 
 immutable ConsoleChar UNKNOWN_CHAR = ConsoleChar.init;
@@ -63,7 +80,7 @@ struct ConsoleBuf {
             _chars[i] = buf._chars[i];
     }
     void set(int x, int y, ConsoleChar ch) {
-        _chars[y * _width + x] = ch;
+        _chars[y * _width + x].set(ch);
     }
     ConsoleChar get(int x, int y) {
         return _chars[y * _width + x];
@@ -227,6 +244,7 @@ class Console {
     /// flush batched updates
     void flush() {
         if (_batchMode) {
+            bool drawn = false;
             for (int i = 0; i < _batchBuf.height; i++) {
                 ConsoleChar[] batchLine = _batchBuf.line(i);
                 ConsoleChar[] bufLine = _buf.line(i);
@@ -242,17 +260,20 @@ class Console {
                             if (batchLine[x + xx] == ConsoleChar.init || batchLine[x + xx].attr != firstAttr)
                                 break;
                             str ~= batchLine[x + xx].ch;
-                            bufLine[x + xx] = batchLine[x + xx];
+                            bufLine[x + xx].set(batchLine[x + xx]);
                         }
                         rawSetCursor(x, i);
                         rawSetAttributes(firstAttr);
                         rawWriteText(cast(dstring)str);
                         x += xx - 1;
+                        drawn = true;
                     }
                 }
             }
             _batchBuf.clear(ConsoleChar.init);
-            rawSetCursor(_cursorX, _cursorY);
+            if (drawn) {
+                rawSetCursor(_cursorX, _cursorY);
+            }
         }
     }
 
@@ -321,10 +342,12 @@ class Console {
 
     protected void updateAttributes() {
         if (_dirtyAttributes) {
-            version(Windows) {
-                calcAttributes();
-                SetConsoleTextAttribute(_hstdout, _attr);
-            } else {
+            calcAttributes();
+            if (!_batchMode) {
+                version(Windows) {
+                    SetConsoleTextAttribute(_hstdout, _attr);
+                } else {
+                }
             }
             _dirtyAttributes = false;
         }
