@@ -37,7 +37,7 @@ class ConsoleWindow : Window {
     }
     /// request window redraw
     override void invalidate() {
-        _platform.redraw();
+        _platform.update();
     }
     /// close window
     override void close() {
@@ -88,26 +88,57 @@ class ConsolePlatform : Platform {
     }
 
 
+    ConsoleWindow activeWindow() {
+        if (!_windowList.length)
+            return null;
+        return _windowList[$ - 1];
+    }
+
     @property DrawBuf drawBuf() { return _drawBuf; }
     protected bool onConsoleKey(KeyEvent event) {
+        auto w = activeWindow;
+        if (!w)
+            return false;
+        if (w.dispatchKeyEvent(event)) {
+            _needRedraw = true;
+            return true;
+        }
         return false;
     }
+
     protected bool onConsoleMouse(MouseEvent event) {
+        auto w = activeWindow;
+        if (!w)
+            return false;
+        if (w.dispatchMouseEvent(event)) {
+            _needRedraw = true;
+            return true;
+        }
         return false;
     }
+
     protected bool onConsoleResize(int width, int height) {
         foreach(w; _windowList) {
             w.onResize(width, height);
         }
         return false;
     }
+
+    protected bool _needRedraw = true;
+    void update() {
+        _needRedraw = true;
+    }
+
     protected void redraw() {
+        if (!_needRedraw)
+            return;
         foreach(w; _windowList) {
             if (w.visible) {
                 _drawBuf.fillRect(Rect(0, 0, w.width, w.height), w.backgroundColor);
                 w.onDraw(_drawBuf);
             }
         }
+        _needRedraw = false;
     }
     protected bool onInputIdle() {
         redraw();
@@ -121,7 +152,16 @@ class ConsolePlatform : Platform {
     * Closes window earlier created with createWindow()
     */
     override void closeWindow(Window w) {
-        // TODO
+        for (int i = 0; i < _windowList.length; i++) {
+            if (_windowList[i] is w) {
+                for (int j = i; j + 1 < _windowList.length; j++)
+                    _windowList[j] = _windowList[j + 1];
+                _windowList[$ - 1] = null;
+                _windowList.length--;
+                destroy(w);
+                return;
+            }
+        }
     }
     /**
     * Starts application message loop.

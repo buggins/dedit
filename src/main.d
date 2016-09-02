@@ -48,6 +48,7 @@ version (DCONSOLE_TEST) {
     import dlangui.widgets.widget;
     import dlangui.widgets.controls;
     import dlangui.widgets.layouts;
+    import dlangui.widgets.editors;
 
     mixin APP_ENTRY_POINT;
 
@@ -68,6 +69,14 @@ version (DCONSOLE_TEST) {
         layout.addChild(new TextWidget(null, "Some text string"d).backgroundColor(0x000080).textColor(0xFFFFFF));
         layout.addChild(new TextWidget(null, "One another text string"d).backgroundColor(0x008000).textColor(0xC0C0C0));
         layout.addChild(new TextWidget(null, "Third text string"d));
+        layout.addChild(new Button("btn1", "Button1"d));
+        layout.addChild(new Button("btn2", "Button2"d));
+        layout.addChild(new Button("btn3", "Button3"d));
+        layout.addChild(new EditLine("ed1", "Some text"d).backgroundColor(0x800080));
+        layout.childById("btn1").click = delegate(Widget w) {
+            Log.d("Button btn1 is pressed");
+            return true; 
+        };
         window.mainWidget = layout;
 
         // show window

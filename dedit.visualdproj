@@ -432,6 +432,7 @@
     <File path="src\dlangui\core\signals.d" />
     <File path="src\dlangui\core\stdaction.d" />
     <File path="src\dlangui\core\streams.d" />
+    <File path="src\dlangui\core\textsource.d" />
     <File path="src\dlangui\core\types.d" />
    </Folder>
    <Folder name="dialogs">
@@ -440,6 +441,9 @@
    </Folder>
    <Folder name="dml">
     <File path="src\dlangui\dml\annotations.d" />
+    <File path="src\dlangui\dml\dmlhighlight.d" />
+    <File path="src\dlangui\dml\parser.d" />
+    <File path="src\dlangui\dml\tokenizer.d" />
    </Folder>
    <Folder name="graphics">
     <File path="src\dlangui\graphics\colors.d" />
@@ -459,8 +463,13 @@
    </Folder>
    <Folder name="widgets">
     <File path="src\dlangui\widgets\controls.d" />
+    <File path="src\dlangui\widgets\editors.d" />
     <File path="src\dlangui\widgets\layouts.d" />
+    <File path="src\dlangui\widgets\lists.d" />
+    <File path="src\dlangui\widgets\menu.d" />
+    <File path="src\dlangui\widgets\metadata.d" />
     <File path="src\dlangui\widgets\popup.d" />
+    <File path="src\dlangui\widgets\scroll.d" />
     <File path="src\dlangui\widgets\styles.d" />
     <File path="src\dlangui\widgets\widget.d" />
     <File path="src\dlangui\widgets\winframe.d" />

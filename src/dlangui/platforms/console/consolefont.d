@@ -143,7 +143,7 @@ class ConsoleFont : Font {
         int underlineY = y + _baseline + underlineHeight * 2;
         buf.console.textColor = ConsoleDrawBuf.toConsoleColor(color);
         buf.console.backgroundColor = CONSOLE_TRANSPARENT_BACKGROUND;
-        Log.d("drawText: (", x, ',', y, " '", text, "', color=", buf.console.textColor);
+        Log.d("drawText: (", x, ',', y, ") '", text, "', color=", buf.console.textColor);
         foreach(int i; 0 .. charsMeasured) {
             dchar ch = text[i];
             if (ch == '&' && (textFlags & (TextFlag.UnderlineHotKeys | TextFlag.HotKeys | TextFlag.UnderlineHotKeysWhenAltPressed))) {
