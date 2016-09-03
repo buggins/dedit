@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{208DDC6F-B88E-45B6-B6D4-0091CD1EA57A}</ProjectGuid>
+    <BaseDirectory>.</BaseDirectory>
+    <Compiler>DMD2</Compiler>
+    <PreferOneStepBuild>true</PreferOneStepBuild>
+    <UseDefaultCompiler>true</UseDefaultCompiler>
+    <IncrementalLinking>true</IncrementalLinking>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug</OutputPath>
+    <ObjectsDirectory>obj/Debug</ObjectsDirectory>
+    <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
+    <UnittestMode>false</UnittestMode>
+    <OutputName>dedit-monod-linux</OutputName>
+    <Target>Executable</Target>
+    <Externalconsole>true</Externalconsole>
+    <DebugLevel>0</DebugLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release</OutputPath>
+    <ObjectsDirectory>obj/Release</ObjectsDirectory>
+    <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
+    <UnittestMode>false</UnittestMode>
+    <OutputName>dedit-monod-linux</OutputName>
+    <Target>Executable</Target>
+    <Externalconsole>true</Externalconsole>
+    <DebugLevel>0</DebugLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Unittest|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Unittest</OutputPath>
+    <ObjectsDirectory>obj/Unittest</ObjectsDirectory>
+    <LinkinThirdPartyLibraries>false</LinkinThirdPartyLibraries>
+    <UnittestMode>true</UnittestMode>
+    <OutputName>dedit-monod-linux</OutputName>
+    <Target>Executable</Target>
+    <Externalconsole>true</Externalconsole>
+    <DebugLevel>0</DebugLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="src\dcons\dconsole.d" />
+    <Compile Include="src\main.d" />
+    <Compile Include="src\dlangui\core\config.d" />
+    <Compile Include="src\dlangui\core\events.d" />
+    <Compile Include="src\dlangui\core\logger.d" />
+    <Compile Include="src\dlangui\core\signals.d" />
+    <Compile Include="src\dlangui\core\collections.d" />
+    <Compile Include="src\dlangui\core\queue.d" />
+    <Compile Include="src\dlangui\core\settings.d" />
+    <Compile Include="src\dlangui\core\types.d" />
+    <Compile Include="src\dlangui\core\i18n.d" />
+    <Compile Include="src\dlangui\core\linestream.d" />
+    <Compile Include="src\dlangui\graphics\colors.d" />
+    <Compile Include="src\dlangui\graphics\drawbuf.d" />
+    <Compile Include="src\dlangui\graphics\fonts.d" />
+    <Compile Include="src\dlangui\graphics\resources.d" />
+    <Compile Include="src\dlangui\core\files.d" />
+    <Compile Include="src\dlangui\core\streams.d" />
+    <Compile Include="src\dlangui\widgets\styles.d" />
+    <Compile Include="src\dlangui\widgets\widget.d" />
+    <Compile Include="src\dlangui\platforms\common\platform.d" />
+    <Compile Include="src\dlangui\dml\annotations.d" />
+    <Compile Include="src\dlangui\dml\dmlhighlight.d" />
+    <Compile Include="src\dlangui\dml\parser.d" />
+    <Compile Include="src\dlangui\dml\tokenizer.d" />
+    <Compile Include="src\dlangui\core\editable.d" />
+    <Compile Include="src\dlangui\widgets\controls.d" />
+    <Compile Include="src\dlangui\widgets\editors.d" />
+    <Compile Include="src\dlangui\widgets\layouts.d" />
+    <Compile Include="src\dlangui\widgets\lists.d" />
+    <Compile Include="src\dlangui\widgets\menu.d" />
+    <Compile Include="src\dlangui\widgets\metadata.d" />
+    <Compile Include="src\dlangui\widgets\popup.d" />
+    <Compile Include="src\dlangui\widgets\scroll.d" />
+    <Compile Include="src\dlangui\widgets\winframe.d" />
+    <Compile Include="src\dlangui\core\stdaction.d" />
+    <Compile Include="src\dlangui\core\asyncsocket.d" />
+    <Compile Include="src\dlangui\core\parseutils.d" />
+    <Compile Include="src\dlangui\core\textsource.d" />
+    <Compile Include="src\dlangui\dialogs\dialog.d" />
+    <Compile Include="src\dlangui\dialogs\msgbox.d" />
+  </ItemGroup>
+</Project>
