@@ -1,6 +1,6 @@
 import std.stdio;
 import dcons.dconsole;
-//version = DCONSOLE_TEST
+version = DCONSOLE_TEST;
 
 version (DCONSOLE_TEST) {
     int main(string[] argv)
@@ -25,7 +25,7 @@ version (DCONSOLE_TEST) {
         console.writeText(" in ");
         console.backgroundColor = TextColor.BLACK;
         console.writeText("console");
-        console.setCursor(12, 12);
+        console.setCursor(2, 12);
         console.writeText("yet another text line");
         console.setCursor(10, 10);
         console.writeText("T");

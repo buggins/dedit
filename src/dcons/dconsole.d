@@ -169,7 +169,57 @@ class Console {
         HANDLE _hstdout;
         WORD _attr;
         immutable ushort COMMON_LVB_UNDERSCORE = 0x8000;
-    }
+	} else {
+		immutable int READ_BUF_SIZE = 1024;
+		char[READ_BUF_SIZE] readBuf;
+		int readBufPos = 0;
+		bool isSequenceCompleted() {
+			if (!readBufPos)
+				return false;
+			if (readBuf[0] == 0x1B) {
+				for (int i = 1; i < readBufPos; i++) {
+					char ch = readBuf[i];
+					if ((ch >= 'a' && ch <='z') || (ch >= 'A' && ch <='Z') || ch == '@' || ch == '~')
+						return true;
+				}
+				return false;
+			}
+			// TODO: utf8
+			return true;
+		}
+		string rawRead(int pollTimeout = 3000) {
+			import core.thread;
+			int waitTime = 0;
+			int startPos = readBufPos;
+			while (readBufPos < READ_BUF_SIZE) {
+				import core.sys.posix.unistd;
+				char ch = 0;
+				int res = cast(int)read(STDIN_FILENO, &ch, 1);
+				if (res <= 0) {
+					if (readBufPos == startPos && waitTime < pollTimeout) {
+						Thread.sleep( dur!("msecs")( 10 ) );
+						waitTime += 10;
+						continue;
+					}
+					break;
+				}
+				readBuf[readBufPos++] = ch;
+				if (isSequenceCompleted())
+					break;
+			}
+			if (readBufPos > 0 && isSequenceCompleted()) {
+				string s = readBuf[0 .. readBufPos].dup;
+				readBufPos = 0;
+				return s;
+			}
+			return null;
+		}
+		bool rawWrite(string s) {
+			import core.sys.posix.unistd;
+			int res = cast(int)write(STDOUT_FILENO, s.ptr, s.length);
+			return (res > 0);
+		}
+	}
 
     bool init() {
         version(Windows) {
@@ -195,6 +245,39 @@ class Console {
             _underline = (_attr & COMMON_LVB_UNDERSCORE) != 0;
             //writeln("csbi=", csbi);
         } else {
+			import core.sys.posix.unistd;
+			import core.sys.posix.fcntl;
+			import core.sys.posix.termios;
+			import core.sys.posix.sys.ioctl;
+			if (!isatty(1))
+				return false;
+			fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL) | O_NONBLOCK);
+			termios ttystate;
+			//get the terminal state
+			tcgetattr(STDIN_FILENO, &ttystate);
+			//turn off canonical mode
+			ttystate.c_lflag &= ~ICANON;
+			//minimum of number input read.
+			ttystate.c_cc[VMIN] = 1;
+			//set the terminal attributes.
+			tcsetattr(STDIN_FILENO, TCSANOW, &ttystate);
+
+			winsize w;
+			ioctl(0, TIOCGWINSZ, &w);
+			_width = w.ws_col;
+			_height = w.ws_row;
+
+			_cursorX = 0;
+			_cursorY = 0;
+
+			_textColor = 7;
+			_backgroundColor = 0;
+			_underline = false;
+
+			rawWrite("\033[31mSome red text");
+			//rawWrite("\x1b[c");
+			//string termType = rawRead();
+			//Log.d("Term type=", termType);
         }
         _buf.resize(_width, _height);
         _batchBuf.resize(_width, _height);
@@ -221,6 +304,7 @@ class Console {
                 FillConsoleOutputCharacter(_hstdout, ' ', _width * _height, COORD(0, 0), &charsWritten);
                 FillConsoleOutputAttribute(_hstdout, _attr, _width * _height, COORD(0, 0), &charsWritten);
             } else {
+				rawWrite("\x1b[2J");
             }
         } else {
             _batchBuf.clear(ConsoleChar(' ', _consoleAttr));
@@ -302,7 +386,12 @@ class Console {
         version(Windows) {
             SetConsoleCursorPosition(_hstdout, COORD(cast(short)x, cast(short)y));
         } else {
-        }
+			import core.stdc.stdio;
+			import core.stdc.string;
+			char buf[50];
+			sprintf(buf.ptr, "\x1b[%d;%dH", y + 1, x + 1);
+			rawWrite(cast(string)(buf[0 .. strlen(buf.ptr)]));
+		}
     }
 
     protected void rawWriteText(dstring str) {
@@ -312,6 +401,9 @@ class Console {
             DWORD charsWritten;
             WriteConsole(_hstdout, s16.ptr, s16.length, &charsWritten, null);
         } else {
+			import std.utf;
+			string s8 = toUTF8(str);
+			rawWrite(s8);
         }
     }
 
@@ -327,7 +419,14 @@ class Console {
                 SetConsoleTextAttribute(_hstdout, _attr);
             }
         } else {
-        }
+			int textCol = (attr & 0x0F);
+			int bgCol = ((attr >> 8) & 0x0F);
+			import core.stdc.stdio;
+			import core.stdc.string;
+			char buf[50];
+			sprintf(buf.ptr, "\x1b[%d;%dm", (textCol & 7) + (textCol & 8 ? 90 : 30), (bgCol & 7) + (bgCol & 8 ? 100 : 40));
+			rawWrite(cast(string)buf[0 .. strlen(buf.ptr)]);
+		}
     }
 
     protected void calcAttributes() {
@@ -349,7 +448,8 @@ class Console {
                 version(Windows) {
                     SetConsoleTextAttribute(_hstdout, _attr);
                 } else {
-                }
+					rawSetAttributes(_consoleAttr);
+				}
             }
             _dirtyAttributes = false;
         }

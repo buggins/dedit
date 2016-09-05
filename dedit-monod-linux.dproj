@@ -84,5 +84,6 @@
     <Compile Include="src\dlangui\core\textsource.d" />
     <Compile Include="src\dlangui\dialogs\dialog.d" />
     <Compile Include="src\dlangui\dialogs\msgbox.d" />
+    <Compile Include="src\dlangui\platforms\common\startup.d" />
   </ItemGroup>
 </Project>
