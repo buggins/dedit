@@ -5,13 +5,25 @@ version = DCONSOLE_TEST;
 version (DCONSOLE_TEST) {
     int main(string[] argv)
     {
-        writeln("Hello D-World!");
+		import dlangui.core.logger;
+		import dlangui.core.events;
+		Log.setFileLogger(new File("dconsole.log", "w"));
+		Log.setLogLevel(LogLevel.Trace);
+		writeln("Hello D-World!");
         Console console = new Console();
         if (!console.init()) {
             writeln("Not in console");
             return 1;
         }
-        writeln("In console: width=", console.width, " height=", console.height);
+		console.keyEvent = delegate(KeyEvent event) {
+			Log.d(event);
+			return true;
+		};
+		console.mouseEvent = delegate(MouseEvent event) {
+			Log.d(event);
+			return true;
+		};
+		writeln("In console: width=", console.width, " height=", console.height);
         console.batchMode = true;
         console.textColor = TextColor.WHITE;
         console.backgroundColor = TextColor.BLACK;
@@ -38,7 +50,7 @@ version (DCONSOLE_TEST) {
         console.flush();
         while (console.pollInput()) {
         }
-        readln();
+        //readln();
         return 0;
     }
 } else {

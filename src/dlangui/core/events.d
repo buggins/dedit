@@ -916,6 +916,12 @@ class MouseEvent {
         _y = y;
         _wheelDelta = wheelDelta;
     }
+
+	override @property string toString() {
+		import std.conv;
+		return "MouseEvent(" ~ to!string(_action) ~ ", " ~ to!string(cast(MouseButton)_button) ~ ", " ~ "%04x".format(_flags) ~ ", (" ~ to!string(_x) ~ "," ~ to!string(y) ~ "))";
+	}
+
 }
 
 /// Keyboard actions for KeyEvent
@@ -1237,6 +1243,10 @@ class KeyEvent {
         _flags = flags;
         _text = text;
     }
+	override @property string toString() {
+		import std.conv;
+		return "KeyEvent(" ~ to!string(_action) ~ ", " ~ to!string(cast(KeyCode)_keyCode) ~ ", " ~ "%04x".format(_flags) ~ ", \"" ~ toUTF8(_text) ~ "\")";
+	}
 }
 
 /// Scroll bar / slider action codes for ScrollEvent.
