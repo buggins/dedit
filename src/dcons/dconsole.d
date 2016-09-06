@@ -146,6 +146,25 @@ struct ConsoleBuf {
 	}
 }
 
+version (Windows) {
+} else {
+	import core.sys.posix.signal;
+	import dlangui.core.logger;
+	__gshared bool SIGHUP_flag = false;
+	extern(C) void signalHandler_SIGHUP( int ) nothrow @nogc @system
+	{
+		SIGHUP_flag = true;
+		try {
+			//Log.w("SIGHUP signal fired");
+		} catch (Exception e) {
+		}
+	}
+
+	void setSignalHandlers() {
+		signal(SIGHUP, &signalHandler_SIGHUP);
+	}
+}
+
 /// console I/O support
 class Console {
 	private int _cursorX;
@@ -180,6 +199,8 @@ class Console {
 			if (readBuf[0] == 0x1B) {
 				for (int i = 1; i < readBufPos; i++) {
 					char ch = readBuf[i];
+					if (ch == 'O' && i == readBufPos - 1)
+					    continue;
 					if ((ch >= 'a' && ch <='z') || (ch >= 'A' && ch <='Z') || ch == '@' || ch == '~')
 						return true;
 				}
@@ -270,6 +291,7 @@ class Console {
 			import core.sys.posix.sys.ioctl;
 			if (!isatty(1))
 				return false;
+			setSignalHandlers();
 			fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL) | O_NONBLOCK);
 			termios ttystate;
 			//get the terminal state
@@ -658,6 +680,11 @@ class Console {
 				return false;
 			}
 		} else {
+			import std.algorithm;
+			if (SIGHUP_flag) {
+				Log.i("SIGHUP signal fired");
+				_stopped = true;
+			}
 			import dlangui.core.logger;
 			string s = rawRead(20);
 			if (s is null) {
@@ -671,17 +698,99 @@ class Console {
 				//
 				string escSequence = s[1 .. $];
 				Log.d("ESC ", escSequence);
-				switch(escSequence) {
-					case "[A": keyCode = KeyCode.UP; break;
-					case "[B": keyCode = KeyCode.DOWN; break;
-					case "[D": keyCode = KeyCode.LEFT; break;
-					case "[C": keyCode = KeyCode.RIGHT; break;
-					default: break;
+				char letter = escSequence[$ - 1];
+				if (escSequence.startsWith("[") && escSequence.length > 1) {
+				    import std.string : indexOf;
+    				string options = escSequence[1 .. $ - 1];
+    				if (letter == '~') {
+    				    string code = options;
+    				    int semicolonPos = cast(int)options.indexOf(";");
+    				    if (semicolonPos >= 0) {
+    				        code = options[0 .. semicolonPos];
+    				        options = options[semicolonPos + 1 .. $];
+    				    } else {
+    				        options = null;
+    				    }
+        				switch(options) {
+        				    case "5": keyFlags = KeyFlag.Control; break;
+        				    case "2": keyFlags = KeyFlag.Shift; break;
+        				    case "3": keyFlags = KeyFlag.Alt; break;
+        				    case "4": keyFlags = KeyFlag.Shift | KeyFlag.Alt; break;
+        				    case "6": keyFlags = KeyFlag.Shift | KeyFlag.Control; break;
+        				    case "7": keyFlags = KeyFlag.Alt | KeyFlag.Control; break;
+        				    case "8": keyFlags = KeyFlag.Shift | KeyFlag.Alt | KeyFlag.Control; break;
+        				    default: break;
+        				}
+				        switch(code) {
+					        case "15": keyCode = KeyCode.F5; break;
+					        case "17": keyCode = KeyCode.F6; break;
+					        case "18": keyCode = KeyCode.F7; break;
+					        case "19": keyCode = KeyCode.F8; break;
+					        case "20": keyCode = KeyCode.F9; break;
+					        case "21": keyCode = KeyCode.F10; break;
+					        case "23": keyCode = KeyCode.F11; break;
+					        case "24": keyCode = KeyCode.F12; break;
+					        case "5": keyCode = KeyCode.PAGEUP; break;
+					        case "6": keyCode = KeyCode.PAGEDOWN; break;
+					        case "2": keyCode = KeyCode.INS; break;
+					        case "3": keyCode = KeyCode.DEL; break;
+					        default: break;
+				        }
+    				} else {
+        				switch(options) {
+        				    case "1;5": keyFlags = KeyFlag.Control; break;
+        				    case "1;2": keyFlags = KeyFlag.Shift; break;
+        				    case "1;3": keyFlags = KeyFlag.Alt; break;
+        				    case "1;4": keyFlags = KeyFlag.Shift | KeyFlag.Alt; break;
+        				    case "1;6": keyFlags = KeyFlag.Shift | KeyFlag.Control; break;
+        				    case "1;7": keyFlags = KeyFlag.Alt | KeyFlag.Control; break;
+        				    case "1;8": keyFlags = KeyFlag.Shift | KeyFlag.Alt | KeyFlag.Control; break;
+        				    default: break;
+        				}
+				        switch(letter) {
+					        case 'A': keyCode = KeyCode.UP; break;
+					        case 'B': keyCode = KeyCode.DOWN; break;
+					        case 'D': keyCode = KeyCode.LEFT; break;
+					        case 'C': keyCode = KeyCode.RIGHT; break;
+					        case 'H': keyCode = KeyCode.HOME; break;
+					        case 'F': keyCode = KeyCode.END; break;
+					        default: break;
+				        }
+			            switch(letter) {
+				            case 'P': keyCode = KeyCode.F1; break;
+				            case 'Q': keyCode = KeyCode.F2; break;
+				            case 'R': keyCode = KeyCode.F3; break;
+				            case 'S': keyCode = KeyCode.F4; break;
+				            default: break;
+			            }
+    				}
+				} else if (escSequence.startsWith("O")) {
+			        switch(letter) {
+				        case 'P': keyCode = KeyCode.F1; break;
+				        case 'Q': keyCode = KeyCode.F2; break;
+				        case 'R': keyCode = KeyCode.F3; break;
+				        case 'S': keyCode = KeyCode.F4; break;
+				        default: break;
+			        }
 				}
-				if (keyCode) {
-					KeyEvent keyDown = new KeyEvent(KeyAction.KeyDown, keyCode, keyFlags, text);
-					handleKeyEvent(keyDown);																																					
-				}
+			} else {
+			    Log.d("stdin: ", s);
+			    switch(s) {
+			        case " ": keyCode = KeyCode.SPACE; text = " "; break;
+			        case "\t": keyCode = KeyCode.TAB; break;
+			        case "\n": keyCode = KeyCode.RETURN; /* text = " " ; */ break;
+			        default: break;
+			    }
+			}
+			if (keyCode) {
+				KeyEvent keyDown = new KeyEvent(KeyAction.KeyDown, keyCode, keyFlags);
+				handleKeyEvent(keyDown);																																					
+				if (text.length) {
+    				KeyEvent keyText = new KeyEvent(KeyAction.Text, keyCode, keyFlags, text);
+				    handleKeyEvent(keyText);																																					
+    			}
+				KeyEvent keyUp = new KeyEvent(KeyAction.KeyUp, keyCode, keyFlags);
+				handleKeyEvent(keyUp);																																					
 			}
 		}
 		return !_stopped;

@@ -7,6 +7,7 @@ version (DCONSOLE_TEST) {
     {
 		import dlangui.core.logger;
 		import dlangui.core.events;
+		import std.utf;
 		Log.setFileLogger(new File("dconsole.log", "w"));
 		Log.setLogLevel(LogLevel.Trace);
 		writeln("Hello D-World!");
@@ -17,10 +18,16 @@ version (DCONSOLE_TEST) {
         }
 		console.keyEvent = delegate(KeyEvent event) {
 			Log.d(event);
+			console.setCursor(2, 2);
+			console.writeText(toUTF32(event.toString ~ "               "));
+			console.flush();
 			return true;
 		};
 		console.mouseEvent = delegate(MouseEvent event) {
 			Log.d(event);
+			console.setCursor(2, 3);
+			console.writeText(toUTF32(event.toString ~ "               "));
+			console.flush();
 			return true;
 		};
 		writeln("In console: width=", console.width, " height=", console.height);
