@@ -206,7 +206,17 @@ class Console {
 				}
 				return false;
 			}
-			// TODO: utf8
+			if (readBuf[0] & 0x80) {
+				if ((readBuf[0] & 0xE0) == 0xC0)
+					return readBufPos >= 2;
+				if ((readBuf[0] & 0xF0) == 0xE0)
+					return readBufPos >= 3;
+				if ((readBuf[0] & 0xF8) == 0xF0)
+					return readBufPos >= 4;
+				if ((readBuf[0] & 0xFC) == 0xF8)
+					return readBufPos >= 5;
+				return readBufPos >= 6;
+			}
 			return true;
 		}
 		string rawRead(int pollTimeout = 3000) {
@@ -774,13 +784,120 @@ class Console {
 			        }
 				}
 			} else {
+				import std.utf;
 			    Log.d("stdin: ", s);
-			    switch(s) {
-			        case " ": keyCode = KeyCode.SPACE; text = " "; break;
-			        case "\t": keyCode = KeyCode.TAB; break;
-			        case "\n": keyCode = KeyCode.RETURN; /* text = " " ; */ break;
-			        default: break;
-			    }
+				try {
+				    dstring s32 = toUTF32(s);
+				    switch(s) {
+				        case " ": keyCode = KeyCode.SPACE; text = " "; break;
+				        case "\t": keyCode = KeyCode.TAB; break;
+				        case "\n": keyCode = KeyCode.RETURN; /* text = " " ; */ break;
+				        case "0": keyCode = KeyCode.KEY_0; text = s32; break;
+				        case "1": keyCode = KeyCode.KEY_1; text = s32; break;
+				        case "2": keyCode = KeyCode.KEY_2; text = s32; break;
+				        case "3": keyCode = KeyCode.KEY_3; text = s32; break;
+				        case "4": keyCode = KeyCode.KEY_4; text = s32; break;
+				        case "5": keyCode = KeyCode.KEY_5; text = s32; break;
+				        case "6": keyCode = KeyCode.KEY_6; text = s32; break;
+				        case "7": keyCode = KeyCode.KEY_7; text = s32; break;
+				        case "8": keyCode = KeyCode.KEY_8; text = s32; break;
+				        case "9": keyCode = KeyCode.KEY_9; text = s32; break;
+				        case "a": 
+				        case "A": 
+				            keyCode = KeyCode.KEY_A; text = s32; break;
+				        case "b": 
+				        case "B": 
+				            keyCode = KeyCode.KEY_B; text = s32; break;
+				        case "c": 
+				        case "C": 
+				            keyCode = KeyCode.KEY_C; text = s32; break;
+				        case "d": 
+				        case "D": 
+				            keyCode = KeyCode.KEY_D; text = s32; break;
+				        case "e": 
+				        case "E": 
+				            keyCode = KeyCode.KEY_E; text = s32; break;
+				        case "f": 
+				        case "F": 
+				            keyCode = KeyCode.KEY_F; text = s32; break;
+				        case "g": 
+				        case "G": 
+				            keyCode = KeyCode.KEY_G; text = s32; break;
+				        case "h": 
+				        case "H": 
+				            keyCode = KeyCode.KEY_H; text = s32; break;
+				        case "i": 
+				        case "I": 
+				            keyCode = KeyCode.KEY_I; text = s32; break;
+				        case "j": 
+				        case "J": 
+				            keyCode = KeyCode.KEY_J; text = s32; break;
+				        case "k": 
+				        case "K": 
+				            keyCode = KeyCode.KEY_K; text = s32; break;
+				        case "l": 
+				        case "L": 
+				            keyCode = KeyCode.KEY_L; text = s32; break;
+				        case "m": 
+				        case "M": 
+				            keyCode = KeyCode.KEY_M; text = s32; break;
+				        case "n": 
+				        case "N": 
+				            keyCode = KeyCode.KEY_N; text = s32; break;
+				        case "o": 
+				        case "O": 
+				            keyCode = KeyCode.KEY_O; text = s32; break;
+				        case "p": 
+				        case "P": 
+				            keyCode = KeyCode.KEY_P; text = s32; break;
+				        case "q": 
+				        case "Q": 
+				            keyCode = KeyCode.KEY_Q; text = s32; break;
+				        case "r": 
+				        case "R": 
+				            keyCode = KeyCode.KEY_R; text = s32; break;
+				        case "s": 
+				        case "S": 
+				            keyCode = KeyCode.KEY_S; text = s32; break;
+				        case "t": 
+				        case "T": 
+				            keyCode = KeyCode.KEY_T; text = s32; break;
+				        case "u": 
+				        case "U": 
+				            keyCode = KeyCode.KEY_U; text = s32; break;
+				        case "v": 
+				        case "V": 
+				            keyCode = KeyCode.KEY_V; text = s32; break;
+				        case "w": 
+				        case "W": 
+				            keyCode = KeyCode.KEY_W; text = s32; break;
+				        case "x": 
+				        case "X": 
+				            keyCode = KeyCode.KEY_X; text = s32; break;
+				        case "y": 
+				        case "Y": 
+				            keyCode = KeyCode.KEY_Y; text = s32; break;
+				        case "z": 
+				        case "Z": 
+				            keyCode = KeyCode.KEY_Z; text = s32; break;
+				        default:
+							if (s32[0] >= 32)
+				            	text = s32;
+				            keyCode = 0x400000 | s32[0];
+				            break;
+				    }
+					if (s32.length == 1 && s32[0] >= 1 && s32[0] <= 26) {
+						// ctrl + A..Z
+						keyCode = KeyCode.KEY_A + s32[0] - 1;
+						keyFlags = KeyFlag.Control;
+					}
+				    if (s32.length == 1 && s32[0] >= 'A' && s32[0] <= 'Z') {
+						// uppercase letter - with shift
+				        keyFlags = KeyFlag.Shift;
+					}
+				} catch (Exception e) {
+					// skip invalid utf8 encoding
+				}
 			}
 			if (keyCode) {
 				KeyEvent keyDown = new KeyEvent(KeyAction.KeyDown, keyCode, keyFlags);
