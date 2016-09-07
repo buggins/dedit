@@ -1,6 +1,6 @@
 import std.stdio;
 import dcons.dconsole;
-//version = DCONSOLE_TEST;
+version = DCONSOLE_TEST;
 
 version (DCONSOLE_TEST) {
     int main(string[] argv)
@@ -66,6 +66,23 @@ version (DCONSOLE_TEST) {
 		console.backgroundColor = 0;
 		console.textColor = 7;
 
+        console.flush();
+
+        import dlangui.platforms.console.consoleapp;
+        import dlangui.graphics.resources;
+        import dlangui.core.types;
+        ConsoleDrawBuf drawBuf = new ConsoleDrawBuf(console);
+        TextDrawable d = new TextDrawable(q{
+            {
+                text: ["╔═╗",
+                       "║ ║",
+                       "╚═╝"],
+                backgroundColor: [0x000080],
+                textColor: [0xFF0000],
+                ninepatch: [1,1,1,1]
+            }
+        });
+        d.drawTo(drawBuf, Rect(3, 5, 12, 10));
         console.flush();
         while (console.pollInput()) {
         }

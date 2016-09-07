@@ -328,6 +328,19 @@ class ConsoleDrawBuf : DrawBuf {
         // TODO
     }
 
+    void drawChar(int x, int y, dchar ch, uint color, uint bgcolor) {
+        if (x < _clipRect.left || x >= _clipRect.right || y < _clipRect.top || y >= _clipRect.bottom)
+            return;
+        ubyte tc = toConsoleColor(color, false);
+        ubyte bc = toConsoleColor(bgcolor, true);
+        dchar[1] text;
+        text[0] = ch;
+        _console.textColor = tc;
+        _console.backgroundColor = bc;
+        _console.setCursor(x, y);
+        _console.writeText(cast(dstring)text);
+    }
+
     /// draw 8bit alpha image - usually font glyph using specified color (clipping is applied)
     override void drawGlyph(int x, int y, Glyph * glyph, uint color) {
         // TODO
@@ -348,7 +361,7 @@ class ConsoleDrawBuf : DrawBuf {
     }
 }
 
-//version (none):
+version (none):
 // entry point for console app
 extern(C) int DLANGUImain(string[] args) {
     initLogs();

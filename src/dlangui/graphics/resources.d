@@ -427,6 +427,7 @@ static Drawable createColorDrawable(string s) {
 
 static if (BACKEND_CONSOLE) {
     class TextDrawable : Drawable {
+        import dlangui.platforms.console.consoleapp : ConsoleDrawBuf;
         private int _width;
         private int _height;
         private dchar[] _text;
@@ -434,6 +435,8 @@ static if (BACKEND_CONSOLE) {
         private uint[] _textColors;
         private Rect _padding;
         private Rect _ninePatch;
+        private bool _tiled;
+        private bool _hasNinePatch;
         this(int dx, int dy, dstring text, uint textColor, uint bgColor) {
             _width = dx;
             _height = dy;
@@ -449,6 +452,97 @@ static if (BACKEND_CONSOLE) {
                 _bgColors ~= bgColor;
             }
         }
+        /**
+           Create from text drawable source file format:
+           text: "text line 1"
+           "text line 2"
+           "text line 3"
+           backgroundColor: 0xFFFFFF [,0xFFFFFF]*
+           textColor: 0x000000, [,0x000000]*
+           ninepatch: left,top,right,bottom
+           padding: left,top,right,bottom
+        */
+        this(dstring src) {
+            import dlangui.dml.tokenizer;
+            import std.utf;
+            Token[] tokens = tokenize(toUTF8(src), ["//"], true, true, true);
+            dstring[] lines;
+            enum Mode {
+                None,
+                Text,
+                BackgroundColor,
+                TextColor,
+                Padding,
+                NinePatch,
+            };
+            Mode mode = Mode.Text;
+            uint[] bg;
+            uint[] col;
+            uint[] pad;
+            uint[] nine;
+            for (int i; i < tokens.length; i++) {
+                if (tokens[i].type == TokenType.ident) {
+                    if (tokens[i].text == "backgroundColor")
+                        mode = Mode.BackgroundColor;
+                    else if (tokens[i].text == "textColor")
+                        mode = Mode.TextColor;
+                    else if (tokens[i].text == "text")
+                        mode = Mode.Text;
+                    else if (tokens[i].text == "padding") {
+                        mode = Mode.Padding;
+                    } else if (tokens[i].text == "ninepatch") {
+                        _hasNinePatch = true;
+                        mode = Mode.NinePatch;
+                    } else
+                        mode = Mode.None;
+                }
+                if (tokens[i].type == TokenType.integer) {
+                    switch(mode) {
+                        case Mode.BackgroundColor: _bgColors ~= tokens[i].intvalue; break;
+                        case Mode.TextColor: _textColors ~= tokens[i].intvalue; break;
+                        case Mode.Padding: pad ~= tokens[i].intvalue; break;
+                        case Mode.NinePatch: nine ~= tokens[i].intvalue; break;
+                        default:
+                            break;
+                    }
+                } else if (tokens[i].type == TokenType.str && mode == Mode.Text) {
+                    dstring line = toUTF32(tokens[i].text);
+                    lines ~= line;
+                    if (_width < line.length)
+                        _width = cast(int)line.length;
+                }
+            }
+            // pad and convert text
+            _height = lines.length;
+            if (!_height) {
+                _width = 0;
+                return;
+            }
+            for (int y = 0; y < _height; y++) {
+                for (int x = 0; x < _width; x++) {
+                    if (x < lines[y].length)
+                        _text ~= lines[y][x];
+                    else
+                        _text ~= ' ';
+                }
+            }
+            // pad padding and ninepatch
+            for (int k = 1; k <= 4; k++) {
+                if (pad.length < k)
+                    pad ~= 0;
+                if (nine.length < k)
+                    nine ~= 0;
+            }
+            _padding = Rect(pad[0], pad[1], pad[2], pad[3]);
+            _ninePatch = Rect(nine[0], nine[1], nine[2], nine[3]);
+            // pad colors
+            for (int k = 1; k <= _width * _height; k++) {
+                if (_textColors.length < k)
+                    _textColors ~= _textColors.length ? _textColors[$ - 1] : 0;
+                if (_bgColors.length < k)
+                    _bgColors ~= _bgColors.length ? _bgColors[$ - 1] : 0xFFFFFFFF;
+            }
+        }
         @property override int width() { 
             return _width;
         }
@@ -458,21 +552,41 @@ static if (BACKEND_CONSOLE) {
         @property override Rect padding() { 
             return _padding;
         }
-        override void drawTo(DrawBuf drawbuf, Rect rc, uint state = 0, int tilex0 = 0, int tiley0 = 0) {
-            import dlangui.platforms.console.consoleapp;
-            import dcons.dconsole;
-            ConsoleDrawBuf buf = cast(ConsoleDrawBuf)drawbuf;
-            if (!buf)
+
+        protected void drawChar(ConsoleDrawBuf buf, int srcx, int srcy, int dstx, int dsty) {
+            if (srcx < 0 || srcx >= _width || srcy < 0 || srcy >= _height)
                 return;
-            Console con = buf.console;
-            for (int y = 0; y < rc.height; y++) {
-                for (int x = 0; x < rc.width; x++) {
-                    int index = y * _width + x;
-                    ubyte tc = ConsoleDrawBuf.toConsoleColor(_textColors[index], false);
-                    ubyte bc = ConsoleDrawBuf.toConsoleColor(_bgColors[index], true);
-                    con.textColor = tc;
-                    con.backgroundColor = bc;
-                    con.writeText(cast(dstring)_text[index .. index + 1]);
+            int index = srcy * _width + srcx;
+            buf.drawChar(dstx, dsty, _text[index], _textColors[index], _bgColors[index]);
+        }
+
+        private static int wrapNinePatch(int v, int width, int ninewidth, int left, int right) {
+            if (v < left)
+                return v;
+            if (v >= width - right)
+                return v - (width - right) + (ninewidth - right);
+            return left + (ninewidth - left - right) * (v - left) / (width - left - right);
+        }
+
+        override void drawTo(DrawBuf drawbuf, Rect rc, uint state = 0, int tilex0 = 0, int tiley0 = 0) {
+            if (!_width || !_height)
+                return; // empty image
+            ConsoleDrawBuf buf = cast(ConsoleDrawBuf)drawbuf;
+            if (!buf) // wrong draw buffer
+                return;
+            if (_hasNinePatch || _tiled) {
+                for (int y = 0; y < rc.height; y++) {
+                    for (int x = 0; x < rc.width; x++) {
+                        int srcx = wrapNinePatch(x, rc.width, _width, _ninePatch.left, _ninePatch.right);
+                        int srcy = wrapNinePatch(y, rc.height, _height, _ninePatch.top, _ninePatch.bottom);
+                        drawChar(buf, srcx, srcy, rc.left + x, rc.top + y);
+                    }
+                }
+            } else {
+                for (int y = 0; y < rc.height && y < _height; y++) {
+                    for (int x = 0; x < rc.width && x < _width; x++) {
+                        drawChar(buf, x, y, rc.left + x, rc.top + y);
+                    }
                 }
             }
             //buf.drawImage(rc.left, rc.top, _image);
