@@ -276,7 +276,9 @@ class ConsoleDrawBuf : DrawBuf {
         RGB(255,255,255),
     ];
 
-    static ubyte toConsoleColor(uint color) {
+    static ubyte toConsoleColor(uint color, bool forBackground = false) {
+        if (forBackground && ((color >> 24) & 0xFF) >= 0x80)
+            return CONSOLE_TRANSPARENT_BACKGROUND;
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
         int b = (color >> 0) & 0xFF;

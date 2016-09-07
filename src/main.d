@@ -104,6 +104,7 @@ version (DCONSOLE_TEST) {
         layout.addChild(new Button("btn2", "Button2"d));
         layout.addChild(new Button("btn3", "Button3"d));
         layout.addChild(new EditLine("ed1", "Some text"d).backgroundColor(0x800080));
+        layout.addChild(new ScrollBar());
         layout.childById("btn1").click = delegate(Widget w) {
             Log.d("Button btn1 is pressed");
             return true; 

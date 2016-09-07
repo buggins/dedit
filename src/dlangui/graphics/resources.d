@@ -425,6 +425,61 @@ static Drawable createColorDrawable(string s) {
     return new EmptyDrawable(); // invalid format - just return empty drawable
 }
 
+static if (BACKEND_CONSOLE) {
+    class TextDrawable : Drawable {
+        private int _width;
+        private int _height;
+        private dchar[] _text;
+        private uint[] _bgColors;
+        private uint[] _textColors;
+        private Rect _padding;
+        private Rect _ninePatch;
+        this(int dx, int dy, dstring text, uint textColor, uint bgColor) {
+            _width = dx;
+            _height = dy;
+            _text.assumeSafeAppend;
+            for (int i = 0; i < text.length && i < dx * dy; i++)
+                _text ~= text[i];
+            for (int i = cast(int)_text.length; i < dx * dy; i++)
+                _text ~= ' ';
+            _textColors.assumeSafeAppend;
+            _bgColors.assumeSafeAppend;
+            for (int i = 0; i < dx * dy; i++) {
+                _textColors ~= textColor;
+                _bgColors ~= bgColor;
+            }
+        }
+        @property override int width() { 
+            return _width;
+        }
+        @property override int height() { 
+            return _height;
+        }
+        @property override Rect padding() { 
+            return _padding;
+        }
+        override void drawTo(DrawBuf drawbuf, Rect rc, uint state = 0, int tilex0 = 0, int tiley0 = 0) {
+            import dlangui.platforms.console.consoleapp;
+            import dcons.dconsole;
+            ConsoleDrawBuf buf = cast(ConsoleDrawBuf)drawbuf;
+            if (!buf)
+                return;
+            Console con = buf.console;
+            for (int y = 0; y < rc.height; y++) {
+                for (int x = 0; x < rc.width; x++) {
+                    int index = y * _width + x;
+                    ubyte tc = ConsoleDrawBuf.toConsoleColor(_textColors[index], false);
+                    ubyte bc = ConsoleDrawBuf.toConsoleColor(_bgColors[index], true);
+                    con.textColor = tc;
+                    con.backgroundColor = bc;
+                    con.writeText(cast(dstring)_text[index .. index + 1]);
+                }
+            }
+            //buf.drawImage(rc.left, rc.top, _image);
+        }
+    }
+}
+
 class ImageDrawable : Drawable {
     protected DrawBufRef _image;
     protected bool _tiled;

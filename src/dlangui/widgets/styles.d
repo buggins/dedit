@@ -1070,15 +1070,22 @@ Theme createDefaultTheme() {
     }
     //res.fontFace = "Arial Narrow";
     static if (BACKEND_CONSOLE) {
-        res.fontSize = 1; // TODO: choose based on DPI
-        Style button = res.createSubstyle(STYLE_BUTTON).backgroundImageId("btn_background").alignment(Align.Center).setMargins(0, 0, 0, 0);
+        res.fontSize = 1;
+        Style button = res.createSubstyle(STYLE_BUTTON).backgroundColor(0x808080).alignment(Align.Center).setMargins(0, 0, 0, 0).textColor(0x000000);
+        //button.createState(State.Selected, State.Selected).backgroundColor(0xFFFFFF);
+        button.createState(State.Pressed, State.Pressed).backgroundColor(0xFFFF00);
+        button.createState(State.Focused|State.Hovered, State.Focused|State.Hovered).textColor(0x800000).backgroundColor(0xFFFFFF);
+        button.createState(State.Focused, State.Focused).backgroundColor(0xFFFFFF).textColor(0x000080);
+        button.createState(State.Hovered, State.Hovered).textColor(0x800000);
+        Style buttonLabel = res.createSubstyle(STYLE_BUTTON_LABEL).layoutWidth(FILL_PARENT).alignment(Align.Left|Align.VCenter);
+        //buttonLabel.createState(State.Hovered, State.Hovered).textColor(0x800000);
+        //buttonLabel.createState(State.Focused, State.Focused).textColor(0x000080);
         res.createSubstyle(STYLE_BUTTON_TRANSPARENT).backgroundImageId("btn_background_transparent").alignment(Align.Center);
-        res.createSubstyle(STYLE_BUTTON_LABEL).layoutWidth(FILL_PARENT).alignment(Align.Left|Align.VCenter);
-        res.createSubstyle(STYLE_BUTTON_IMAGE).alignment(Align.Center);
+        res.createSubstyle(STYLE_BUTTON_IMAGE).alignment(Align.Center).textColor(0x000000);
         res.createSubstyle(STYLE_TEXT).setMargins(0, 0, 0, 0).setPadding(0, 0, 0, 0);
         res.createSubstyle(STYLE_HSPACER).layoutWidth(FILL_PARENT).minWidth(5).layoutWeight(100);
         res.createSubstyle(STYLE_VSPACER).layoutHeight(FILL_PARENT).minHeight(5).layoutWeight(100);
-        res.createSubstyle(STYLE_BUTTON_NOMARGINS).backgroundImageId("btn_background").alignment(Align.Center); // .setMargins(5,5,5,5)
+        res.createSubstyle(STYLE_BUTTON_NOMARGINS).alignment(Align.Center); // .setMargins(5,5,5,5)
         //button.createState(State.Enabled | State.Focused, State.Focused).backgroundImageId("btn_default_small_normal_disable_focused");
         //button.createState(State.Enabled, 0).backgroundImageId("btn_default_small_normal_disable");
         //button.createState(State.Pressed, State.Pressed).backgroundImageId("btn_default_small_pressed");
@@ -1104,7 +1111,7 @@ Theme createDefaultTheme() {
         tabUp.layoutWidth(FILL_PARENT);
         tabUp.createState(State.Selected, State.Selected).backgroundImageId("tab_up_backgrond_selected");
         Style tabUpButtonText = res.createSubstyle(STYLE_TAB_UP_BUTTON_TEXT);
-        tabUpButtonText.textColor(0x000000).fontSize(12).alignment(Align.Center);
+        tabUpButtonText.textColor(0x000000).alignment(Align.Center);
         tabUpButtonText.createState(State.Selected, State.Selected).textColor(0x000000);
         tabUpButtonText.createState(State.Selected|State.Focused, State.Selected|State.Focused).textColor(0x000000);
         tabUpButtonText.createState(State.Focused, State.Focused).textColor(0x000000);
