@@ -473,8 +473,8 @@ class Console {
             region.Bottom = cast(short)y;
             WriteConsoleOutput(_hstdout, lineBuf.ptr, bufSize, bufCoord, &region);
         } else {
-            rawSetCursor(x, i);
-            rawSetAttributes(firstAttr);
+            rawSetCursor(x, y);
+            rawSetAttributes(attr);
             rawWriteText(cast(dstring)str);
         }
     }
