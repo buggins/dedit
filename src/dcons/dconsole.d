@@ -197,6 +197,8 @@ class Console {
 			if (!readBufPos)
 				return false;
 			if (readBuf[0] == 0x1B) {
+				if (readBufPos > 1 && readBuf[1] == '[' && readBuf[2] == 'M')
+					return readBufPos >= 6;
 				for (int i = 1; i < readBufPos; i++) {
 					char ch = readBuf[i];
 					if (ch == 'O' && i == readBufPos - 1)
@@ -325,8 +327,8 @@ class Console {
 			_textColor = 7;
 			_backgroundColor = 0;
 			_underline = false;
-
-			rawWrite("\033[31mSome red text");
+            // enable mouse tracking - all events
+			rawWrite("\033[?1003h");
 			//rawWrite("\x1b[c");
 			//string termType = rawRead();
 			//Log.d("Term type=", termType);
@@ -586,6 +588,7 @@ class Console {
 		return false;
 	}
 	private ushort lastMouseFlags = 0;
+	private MouseButton lastButtonDown = MouseButton.None;
 	/// wait for input, handle input
 	bool pollInput() {
 		if (_stopped)
@@ -700,6 +703,52 @@ class Console {
 			if (s is null) {
 				handleInputIdle();
 				return !_stopped;
+			}
+			if (s.length == 6 && s[0] == 27 && s[1] == '[' && s[2] == 'M') {
+				// mouse event
+				MouseAction a = MouseAction.Cancel;
+				int mb = s[3] - 32;
+				int mx = s[4] - 32 - 1;
+				int my = s[5] - 32 - 1;
+				
+				int btn = mb & 3;
+				if (btn < 3)
+					a = MouseAction.ButtonDown;
+				else
+					a = MouseAction.ButtonUp;
+				if (mb & 32) {
+				    a = MouseAction.Move;
+				}
+				MouseButton button = MouseButton.None;
+				ushort flags = 0;
+				if (btn == 0) {
+					flags |= MouseFlag.LButton;
+					button = MouseButton.Left;
+				}
+				if (btn == 1) {
+					flags |= MouseFlag.RButton;
+					button = MouseButton.Right;
+			    }
+				if (btn == 2) {
+					flags |= MouseFlag.MButton;
+					button = MouseButton.Middle;
+			    }
+				if (btn == 3 && a != MouseAction.Move)
+					a = MouseAction.ButtonUp;
+				if (button != MouseButton.None)
+					lastButtonDown = button;
+				else if (a == MouseAction.ButtonUp)
+					button = lastButtonDown;
+				if (mb & 4)
+					flags |= MouseFlag.Shift;
+				if (mb & 8)
+					flags |= MouseFlag.Alt;
+				if (mb & 16)
+					flags |= MouseFlag.Control;
+				Log.d("mouse evt:", s, " mb=", mb, " mx=", mx, " my=", my, "  action=", a, " button=", button, " flags=", flags);
+				MouseEvent evt = new MouseEvent(a, button, flags, cast(short)mx, cast(short)my);
+				handleMouseEvent(evt);
+				return true;
 			}
 			int keyCode = 0;
 			int keyFlags = 0;
