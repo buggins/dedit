@@ -108,6 +108,7 @@ version (DCONSOLE_TEST) {
         if (!Platform.instance) {
             Log.e("Platform.instance is null!!!");
         }
+
         Window window = Platform.instance.createWindow("DlangUI example - HelloWorld", null);
         Log.d("Window created");
 
@@ -121,7 +122,7 @@ version (DCONSOLE_TEST) {
         layout.addChild(new Button("btn2", "Button2"d));
         layout.addChild(new Button("btn3", "Button3"d));
         layout.addChild(new EditLine("ed1", "Some text"d));
-        layout.addChild(new ScrollBar());
+        layout.addChild(new ScrollBar(null, Orientation.Horizontal));
         layout.childById("btn1").click = delegate(Widget w) {
             Log.d("Button btn1 is pressed");
             return true; 

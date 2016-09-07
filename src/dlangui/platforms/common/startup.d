@@ -303,10 +303,11 @@ extern (C) void initResourceManagers() {
     Log.d("Calling initSharedResourceManagers()");
     initSharedResourceManagers();
 
+    Log.d("Calling initStandardEditorActions()");
+    import dlangui.widgets.editors;
+    initStandardEditorActions();
+
     static if (BACKEND_GUI) {
-        Log.d("Calling initStandardEditorActions()");
-        import dlangui.widgets.editors;
-        initStandardEditorActions();
         Log.d("Calling registerStandardWidgets()");
         registerStandardWidgets();
     }

@@ -1,13 +1,13 @@
 module dlangui.core.config;
 
-version = USE_CONSOLE;
+//version = USE_CONSOLE;
 
 version(USE_CONSOLE) {
     version = NO_OPENGL;
     version = NO_FREETYPE;
-    enum BACKEND_CONSOLE = true;
     enum ENABLE_OPENGL = false;
     enum ENABLE_FREETYPE = false;
+    enum BACKEND_CONSOLE = true;
     enum BACKEND_GUI = false;
     enum BACKEND_SDL = false;
     enum BACKEND_X11 = false;
@@ -41,6 +41,7 @@ version(USE_CONSOLE) {
         enum BACKEND_DSFML = false;
         enum BACKEND_WIN32 = false;
         enum BACKEND_ANDROID = false;
+        enum BACKEND_CONSOLE = false;
     } else version (USE_ANDROID) {
         // Android backend already selected using version identifier
         version (USE_OPENGL) {
@@ -53,6 +54,7 @@ version(USE_CONSOLE) {
         enum BACKEND_DSFML = false;
         enum BACKEND_WIN32 = false;
         enum BACKEND_ANDROID = true;
+        enum BACKEND_CONSOLE = false;
     } else version (USE_X11) {
         // X11 backend already selected using version identifier
         version (USE_OPENGL) {
@@ -64,6 +66,7 @@ version(USE_CONSOLE) {
         enum BACKEND_X11 = true;
         enum BACKEND_DSFML = false;
         enum BACKEND_WIN32 = false;
+        enum BACKEND_CONSOLE = false;
     } else version (USE_WIN32) {
         // Win32 backend already selected using version identifier
         version (USE_OPENGL) {
@@ -76,6 +79,7 @@ version(USE_CONSOLE) {
         enum BACKEND_DSFML = false;
         enum BACKEND_WIN32 = true;
         enum BACKEND_ANDROID = false;
+        enum BACKEND_CONSOLE = false;
     } else version (USE_DSFML) {
         // DSFML backend already selected using version identifier
         version (USE_OPENGL) {
@@ -88,6 +92,7 @@ version(USE_CONSOLE) {
         enum BACKEND_DSFML = true;
         enum BACKEND_WIN32 = false;
         enum BACKEND_ANDROID = false;
+        enum BACKEND_CONSOLE = false;
     } else {
         // no backend selected: set default based on platform
         version (Windows) {
@@ -102,6 +107,7 @@ version(USE_CONSOLE) {
             enum BACKEND_DSFML = false;
             enum BACKEND_WIN32 = true;
             enum BACKEND_ANDROID = false;
+            enum BACKEND_CONSOLE = false;
         } else version(Android) {
             // Default for Linux: use SDL and OpenGL
             enum ENABLE_OPENGL = true;
@@ -110,6 +116,7 @@ version(USE_CONSOLE) {
             enum BACKEND_DSFML = false;
             enum BACKEND_WIN32 = false;
             enum BACKEND_ANDROID = true;
+            enum BACKEND_CONSOLE = false;
         } else version(linux) {
             // Default for Linux: use SDL and OpenGL
             version (NO_OPENGL) {
@@ -122,6 +129,7 @@ version(USE_CONSOLE) {
             enum BACKEND_DSFML = false;
             enum BACKEND_WIN32 = false;
             enum BACKEND_ANDROID = false;
+            enum BACKEND_CONSOLE = false;
         } else version(OSX) {
             // Default: use SDL and OpenGL
             version (NO_OPENGL) {
@@ -134,6 +142,7 @@ version(USE_CONSOLE) {
             enum BACKEND_DSFML = false;
             enum BACKEND_WIN32 = false;
             enum BACKEND_ANDROID = false;
+            enum BACKEND_CONSOLE = false;
         } else {
             // Unknown platform: use SDL and OpenGL
             version (NO_OPENGL) {
@@ -146,6 +155,7 @@ version(USE_CONSOLE) {
             enum BACKEND_DSFML = false;
             enum BACKEND_WIN32 = false;
             enum BACKEND_ANDROID = false;
+            enum BACKEND_CONSOLE = false;
         }
     }
 }

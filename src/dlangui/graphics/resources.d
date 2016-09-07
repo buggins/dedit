@@ -153,11 +153,12 @@ struct EmbeddedResourceList {
         string jpgname = name ~ ".jpg";
         string jpegname = name ~ ".jpeg";
         string xpmname = name ~ ".xpm";
+        string timname = name ~ ".tim";
         // search backwards to allow overriding standard resources (which are added first)
         for (int i = cast(int)list.length - 1; i >= 0; i--) {
             string s = list[i].name;
             if (s.equal(name) || s.equal(xmlname) || s.equal(pngname) || s.equal(png9name) 
-                    || s.equal(jpgname) || s.equal(jpegname) || s.equal(xpmname))
+                    || s.equal(jpgname) || s.equal(jpegname) || s.equal(xpmname) || s.equal(timname))
                 return &list[i];
         }
         return null;
@@ -214,7 +215,11 @@ string[] splitLines(string s) {
 
 /// embed all resources from list
 EmbeddedResource[] embedResourcesFromList(string resourceList)() {
-    return embedResources!(splitLines(import(resourceList)))();
+    static if (BACKEND_CONSOLE) {
+        return embedResources!(splitLines(import("console_" ~ resourceList)))();
+    } else {
+        return embedResources!(splitLines(import(resourceList)))();
+    }
 }
 
 
@@ -446,6 +451,20 @@ static Drawable createColorDrawable(string s) {
 }
 
 static if (BACKEND_CONSOLE) {
+    /**
+        Text image drawable.
+        Resource file extension: .tim
+        Image format is JSON based. Sample:
+                {
+                    text: [
+                       "╔═╗",
+                       "║ ║",
+                       "╚═╝"],
+                    backgroundColor: [0x000080],
+                    textColor: [0xFF0000],
+                    ninepatch: [1,1,1,1]
+                }
+    */
     class TextDrawable : Drawable {
         import dlangui.platforms.console.consoleapp : ConsoleDrawBuf;
         private int _width;
@@ -1184,13 +1203,30 @@ class DrawableCache {
                 // reload from file
                 if (_filename.endsWith(".xml")) {
                     // XML drawables support
-                    StateDrawable d = new StateDrawable();
-                    if (!d.load(_filename)) {
-                        destroy(d);
-                        _error = true;
-                    } else {
-                        _drawable = d;
+                        StateDrawable d = new StateDrawable();
+                        if (!d.load(_filename)) {
+                            destroy(d);
+                            _error = true;
+                        } else {
+                            _drawable = d;
+                        }
+                } else if (_filename.endsWith(".tim")) {
+                    static if (BACKEND_CONSOLE) {
+                        try {
+                            // .tim (text image) drawables support
+                            string s = cast(string)loadResourceBytes(_filename);
+                            if (s.length) {
+                                TextDrawable d = new TextDrawable(s);
+                                if (d.width && d.height) {
+                                    _drawable = d;
+                                }
+                            }
+                        } catch (Exception e) {
+                            // cannot find drawable file
+                        }
                     }
+                    if (!_drawable)
+                        _error = true;
                 } else if (_filename.startsWith("#")) {
                     // color reference #AARRGGBB, e.g. #5599AA, or FrameDrawable description string #frameColor,frameSize,#innerColor
                     _drawable = createColorDrawable(_filename);
@@ -1237,6 +1273,23 @@ class DrawableCache {
                         Log.d("loaded .xml drawable from ", _filename);
                         _drawable = d;
                     }
+                } else if (_filename.endsWith(".tim") || _filename.endsWith(".TIM")) {
+                    static if (BACKEND_CONSOLE) {
+                        try {
+                            // .tim (text image) drawables support
+                            string s = cast(string)loadResourceBytes(_filename);
+                            if (s.length) {
+                                TextDrawable d = new TextDrawable(s);
+                                if (d.width && d.height) {
+                                    _drawable = d;
+                                }
+                            }
+                        } catch (Exception e) {
+                            // cannot find drawable file
+                        }
+                    }
+                    if (!_drawable)
+                        _error = true;
                 } else if (_filename.startsWith("{")) {
                     // json in {} with text drawable description
                     static if (BACKEND_CONSOLE) {
