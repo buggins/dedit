@@ -504,8 +504,7 @@ class Console {
 			CONSOLE_SCREEN_BUFFER_INFO csbi;
 			if (!GetConsoleScreenBufferInfo(_hstdout, &csbi))
 			{
-				//printf( "GetConsoleScreenBufferInfo failed: %lu\n", GetLastError());
-				return false;
+				return;
 			}
 			_cursorX = csbi.dwCursorPosition.X;
 			_cursorY = csbi.dwCursorPosition.Y;
