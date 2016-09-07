@@ -54,6 +54,18 @@ version (DCONSOLE_TEST) {
         console.writeText("one more text line #14");
         console.setCursor(14, 15);
         console.writeText("one more text line #15");
+
+		for (ubyte tc = 0; tc < 16; tc++) {
+			for (ubyte bc = 0; bc < 16; bc++) {
+				console.setCursor(40 + tc*2, 5 + bc);
+				console.textColor = tc;
+				console.backgroundColor = bc;
+				console.writeText("AA");
+			}
+		}
+		console.backgroundColor = 0;
+		console.textColor = 7;
+
         console.flush();
         while (console.pollInput()) {
         }
