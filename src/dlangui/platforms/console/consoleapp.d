@@ -361,7 +361,7 @@ class ConsoleDrawBuf : DrawBuf {
     }
 }
 
-version (none):
+//version (none):
 // entry point for console app
 extern(C) int DLANGUImain(string[] args) {
     initLogs();

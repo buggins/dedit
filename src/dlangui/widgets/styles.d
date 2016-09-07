@@ -1071,6 +1071,7 @@ Theme createDefaultTheme() {
     //res.fontFace = "Arial Narrow";
     static if (BACKEND_CONSOLE) {
         res.fontSize = 1;
+        res.textColor = 0xFFFFFF;
         Style button = res.createSubstyle(STYLE_BUTTON).backgroundColor(0x808080).alignment(Align.Center).setMargins(0, 0, 0, 0).textColor(0x000000);
         //button.createState(State.Selected, State.Selected).backgroundColor(0xFFFFFF);
         button.createState(State.Pressed, State.Pressed).backgroundColor(0xFFFF00);
@@ -1155,7 +1156,17 @@ Theme createDefaultTheme() {
         //listItem.createState(State.Selected, State.Selected).backgroundColor(0xC04040FF).textColor(0x000000);
         //listItem.createState(State.Enabled, 0).textColor(0x80000000); // half transparent text for disabled item
 
-        Style editLine = res.createSubstyle(STYLE_EDIT_LINE).backgroundImageId("editbox_background")
+        Style editLine = res.createSubstyle(STYLE_EDIT_LINE).backgroundImageId(q{
+                {
+                    text: [
+                       "╔═╗",
+                       "║ ║",
+                       "╚═╝"],
+                    backgroundColor: [0x000080],
+                    textColor: [0xFF0000],
+                    ninepatch: [1,1,1,1]
+                }
+            })
             .setPadding(0,0,0,0).setMargins(0,0,0,0).minWidth(20)
             .fontFace("Arial").fontFamily(FontFamily.SansSerif).fontSize(1);
         Style editBox = res.createSubstyle(STYLE_EDIT_BOX).backgroundImageId("editbox_background")

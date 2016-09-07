@@ -384,6 +384,26 @@ static uint decodeDimension(string s) {
     return value;
 }
 
+static if (BACKEND_CONSOLE) {
+    /**
+    Sample format:
+    {
+        text: [
+            "╔═╗",
+            "║ ║",
+            "╚═╝"],
+        backgroundColor: [0x000080], // put more values for individual colors of cells
+        textColor: [0xFF0000], // put more values for individual colors of cells
+        ninepatch: [1,1,1,1]
+    }
+    */
+    static Drawable createTextDrawable(string s) {
+        TextDrawable drawable = new TextDrawable(s);
+        if (drawable.width == 0 || drawable.height == 0)
+            return null;
+        return drawable;
+    }
+}
 
 /// decode solid color / gradient / frame drawable from string like #AARRGGBB, e.g. #5599AA
 /// 
@@ -451,6 +471,10 @@ static if (BACKEND_CONSOLE) {
                 _textColors ~= textColor;
                 _bgColors ~= bgColor;
             }
+        }
+        this(string src) {
+            import std.utf;
+            this(toUTF32(src));
         }
         /**
            Create from text drawable source file format:
@@ -528,10 +552,12 @@ static if (BACKEND_CONSOLE) {
             }
             // pad padding and ninepatch
             for (int k = 1; k <= 4; k++) {
-                if (pad.length < k)
-                    pad ~= 0;
                 if (nine.length < k)
                     nine ~= 0;
+                if (pad.length < k)
+                    pad ~= 0;
+                if (pad[k-1] < nine[k-1])
+                    pad[k-1] = nine[k-1];
             }
             _padding = Rect(pad[0], pad[1], pad[2], pad[3]);
             _ninePatch = Rect(nine[0], nine[1], nine[2], nine[3]);
@@ -1168,6 +1194,11 @@ class DrawableCache {
                 } else if (_filename.startsWith("#")) {
                     // color reference #AARRGGBB, e.g. #5599AA, or FrameDrawable description string #frameColor,frameSize,#innerColor
                     _drawable = createColorDrawable(_filename);
+                } else if (_filename.startsWith("{")) {
+                    // json in {} with text drawable description
+                    static if (BACKEND_CONSOLE) {
+                        _drawable = createTextDrawable(_filename);
+                    }
                 } else {
                     static if (BACKEND_GUI) {
                         // PNG/JPEG drawables support
@@ -1206,9 +1237,11 @@ class DrawableCache {
                         Log.d("loaded .xml drawable from ", _filename);
                         _drawable = d;
                     }
-                } else if (_filename.startsWith("#")) {
-                    // color reference #AARRGGBB, e.g. #5599AA, or FrameDrawable description string #frameColor,frameSize,#innerColor
-                    _drawable = createColorDrawable(_filename);
+                } else if (_filename.startsWith("{")) {
+                    // json in {} with text drawable description
+                    static if (BACKEND_CONSOLE) {
+                        _drawable = createTextDrawable(_filename);
+                    }
                 } else {
                     static if (BACKEND_GUI) {
                         // PNG/JPEG drawables support
@@ -1251,6 +1284,8 @@ class DrawableCache {
     DrawableCacheItem[string] _idToDrawableMap;
     DrawableRef _nullDrawable;
     ref DrawableRef get(string id) {
+        while (id.length && (id[0] == ' ' || id[0] == '\t' || id[0] == '\r' || id[0] == '\n'))
+               id = id[1 .. $];
         if (id.equal("@null"))
             return _nullDrawable;
         if (id in _idToDrawableMap)
@@ -1316,7 +1351,7 @@ class DrawableCache {
     }
     /// get resource file full pathname by resource id, null if not found
     string findResource(string id) {
-        if (id.startsWith("#"))
+        if (id.startsWith("#") || id.startsWith("{"))
             return id; // it's not a file name, just a color #AARRGGBB
         if (id in _idToFileMap)
             return _idToFileMap[id];
