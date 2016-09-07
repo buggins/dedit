@@ -118,9 +118,11 @@ class ConsolePlatform : Platform {
     }
 
     protected bool onConsoleResize(int width, int height) {
+        drawBuf.resize(width, height);
         foreach(w; _windowList) {
             w.onResize(width, height);
         }
+        _needRedraw = true;
         return false;
     }
 
@@ -229,6 +231,7 @@ class ConsoleDrawBuf : DrawBuf {
     /// resize buffer
     override void resize(int width, int height) {
         // IGNORE
+        resetClipping();
     }
 
     //========================================================
@@ -237,7 +240,7 @@ class ConsoleDrawBuf : DrawBuf {
     /// fill the whole buffer with solid color (no clipping applied)
     override void fill(uint color) {
         // TODO
-        Log.d("fill");
+        fillRect(Rect(0, 0, width, height), color);
     }
 
     private struct RGB {
@@ -299,8 +302,6 @@ class ConsoleDrawBuf : DrawBuf {
 
     /// fill rectangle with solid color (clipping is applied)
     override void fillRect(Rect rc, uint color) {
-        // TODO
-        Log.d("fillRect");
         uint alpha = color >> 24;
         if (alpha >= 128)
             return; // transparent

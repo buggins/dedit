@@ -1,6 +1,6 @@
 import std.stdio;
 import dcons.dconsole;
-version = DCONSOLE_TEST;
+//version = DCONSOLE_TEST;
 
 version (DCONSOLE_TEST) {
     int main(string[] argv)

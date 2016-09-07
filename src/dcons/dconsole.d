@@ -400,9 +400,7 @@ class Console {
 							str ~= batchLine[x + xx].ch;
 							bufLine[x + xx].set(batchLine[x + xx]);
 						}
-						rawSetCursor(x, i);
-						rawSetAttributes(firstAttr);
-						rawWriteText(cast(dstring)str);
+                        rawWriteTextAt(x, i, firstAttr, cast(dstring)str);
 						x += xx - 1;
 						drawn = true;
 					}
@@ -447,6 +445,39 @@ class Console {
 			rawWrite(cast(string)(buf[0 .. strlen(buf.ptr)]));
 		}
 	}
+
+    protected void rawWriteTextAt(int x, int y, uint attr, dstring str) {
+        if (!str.length)
+            return;
+        version (Windows) {
+            CHAR_INFO[1000] lineBuf;
+			WORD newattr = cast(WORD) (
+                                       (attr & 0x0F)
+                                       | (((attr >> 8) & 0x0F) << 4)
+                                       | (((attr >> 16) & 1) ? COMMON_LVB_UNDERSCORE : 0)
+                                       );
+            for (int i = 0; i < str.length; i++) {
+                lineBuf[i].UnicodeChar = cast(WCHAR)str[i];
+                lineBuf[i].Attributes = newattr;
+            }
+            COORD bufSize;
+            COORD bufCoord;
+            bufSize.X = cast(short)str.length;
+            bufSize.Y = 1;
+            bufCoord.X = 0;
+            bufCoord.Y = 0;
+            SMALL_RECT region;
+            region.Left = cast(short)x;
+            region.Right = cast(short)(x + cast(int)str.length);
+            region.Top = cast(short)y;
+            region.Bottom = cast(short)y;
+            WriteConsoleOutput(_hstdout, lineBuf.ptr, bufSize, bufCoord, &region);
+        } else {
+            rawSetCursor(x, i);
+            rawSetAttributes(firstAttr);
+            rawWriteText(cast(dstring)str);
+        }
+    }
 
 	protected void rawWriteText(dstring str) {
 		version(Windows) {
