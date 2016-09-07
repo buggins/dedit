@@ -461,6 +461,11 @@ class Console {
 		}
 	}
 
+    version (Windows) {
+    } else {
+        private int lastTextColor = -1;
+        private int lastBackgroundColor = -1;
+    }
 	protected void rawSetAttributes(uint attr) {
 		version(Windows) {
 			WORD newattr = cast(WORD) (
@@ -475,12 +480,50 @@ class Console {
 		} else {
 			int textCol = (attr & 0x0F);
 			int bgCol = ((attr >> 8) & 0x0F);
+			textCol = (textCol & 7) + (textCol & 8 ? 90 : 30);
+			bgCol = (bgCol & 7) + (bgCol & 8 ? 100 : 40);
+			if (textCol == lastTextColor && bgCol == lastBackgroundColor)
+    			return;
 			import core.stdc.stdio;
 			import core.stdc.string;
 			char buf[50];
-			sprintf(buf.ptr, "\x1b[%d;%dm", (textCol & 7) + (textCol & 8 ? 90 : 30), (bgCol & 7) + (bgCol & 8 ? 100 : 40));
+			if (textCol != lastTextColor && bgCol != lastBackgroundColor)
+			    sprintf(buf.ptr, "\x1b[%d;%dm", textCol, bgCol);
+			else if (textCol != lastTextColor && bgCol == lastBackgroundColor)
+			    sprintf(buf.ptr, "\x1b[%dm", textCol);
+			else
+			    sprintf(buf.ptr, "\x1b[%dm", bgCol);
+			lastBackgroundColor = bgCol;
+			lastTextColor = textCol;
 			rawWrite(cast(string)buf[0 .. strlen(buf.ptr)]);
 		}
+	}
+	
+	protected void checkResize() {
+	    version(Windows) {
+			CONSOLE_SCREEN_BUFFER_INFO csbi;
+			if (!GetConsoleScreenBufferInfo(_hstdout, &csbi))
+			{
+				//printf( "GetConsoleScreenBufferInfo failed: %lu\n", GetLastError());
+				return false;
+			}
+			_cursorX = csbi.dwCursorPosition.X;
+			_cursorY = csbi.dwCursorPosition.Y;
+			int w = csbi.srWindow.Right - csbi.srWindow.Left + 1; // csbi.dwSize.X;
+			int h = csbi.srWindow.Bottom - csbi.srWindow.Top + 1; // csbi.dwSize.Y;
+			if (_width != w || _height != h)
+    			handleConsoleResize(w, h);
+	    } else {
+			import core.sys.posix.unistd;
+			//import core.sys.posix.fcntl;
+			//import core.sys.posix.termios;
+			import core.sys.posix.sys.ioctl;
+			winsize w;
+			ioctl(STDIN_FILENO, TIOCGWINSZ, &w);
+			if (_width != w.ws_col || _height != w.ws_row) {
+			    handleConsoleResize(w.ws_col, w.ws_row);
+			}
+	    }
 	}
 
 	protected void calcAttributes() {
@@ -583,6 +626,7 @@ class Console {
 		return false;
 	}
 	protected bool handleInputIdle() {
+    	checkResize();
 		if (inputIdleEvent.assigned)
 			return inputIdleEvent();
 		return false;
@@ -725,11 +769,11 @@ class Console {
 					flags |= MouseFlag.LButton;
 					button = MouseButton.Left;
 				}
-				if (btn == 1) {
+				if (btn == 2) {
 					flags |= MouseFlag.RButton;
 					button = MouseButton.Right;
 			    }
-				if (btn == 2) {
+				if (btn == 1) {
 					flags |= MouseFlag.MButton;
 					button = MouseButton.Middle;
 			    }
@@ -745,7 +789,7 @@ class Console {
 					flags |= MouseFlag.Alt;
 				if (mb & 16)
 					flags |= MouseFlag.Control;
-				Log.d("mouse evt:", s, " mb=", mb, " mx=", mx, " my=", my, "  action=", a, " button=", button, " flags=", flags);
+				//Log.d("mouse evt:", s, " mb=", mb, " mx=", mx, " my=", my, "  action=", a, " button=", button, " flags=", flags);
 				MouseEvent evt = new MouseEvent(a, button, flags, cast(short)mx, cast(short)my);
 				handleMouseEvent(evt);
 				return true;
