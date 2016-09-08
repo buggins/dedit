@@ -6,7 +6,7 @@ import dlangui.graphics.drawbuf;
 import dlangui.graphics.fonts;
 import dlangui.widgets.styles;
 import dlangui.platforms.console.consolefont;
-private import dcons.dconsole;
+private import dlangui.platforms.console.dconsole;
 
 class ConsoleWindow : Window {
     ConsolePlatform _platform;

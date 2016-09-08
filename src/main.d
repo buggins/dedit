@@ -1,5 +1,5 @@
 import std.stdio;
-import dcons.dconsole;
+import dlangui.platforms.console.dconsole;
 //version = DCONSOLE_TEST;
 
 version (DCONSOLE_TEST) {

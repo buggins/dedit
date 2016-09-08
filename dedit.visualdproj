@@ -409,9 +409,6 @@
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="dedit">
-  <Folder name="dcons">
-   <File path="src\dcons\dconsole.d" />
-  </Folder>
   <Folder name="dedit">
    <File path="src\dedit\deditor.d" />
   </Folder>
@@ -457,6 +454,7 @@
      <File path="src\dlangui\platforms\common\startup.d" />
     </Folder>
     <Folder name="console">
+     <File path="src\dlangui\platforms\console\dconsole.d" />
      <File path="src\dlangui\platforms\console\consoleapp.d" />
      <File path="src\dlangui\platforms\console\consolefont.d" />
     </Folder>

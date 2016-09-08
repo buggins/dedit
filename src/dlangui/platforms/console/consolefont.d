@@ -125,7 +125,7 @@ class ConsoleFont : Font {
         if (text.length == 0)
             return; // nothing to draw - empty text
         import dlangui.platforms.console.consoleapp;
-        import dcons.dconsole;
+        import dlangui.platforms.console.dconsole;
         ConsoleDrawBuf buf = cast(ConsoleDrawBuf)drawBuf;
         if (!buf)
             return;

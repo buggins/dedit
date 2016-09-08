@@ -1,4 +1,4 @@
-module dcons.dconsole;
+module dlangui.platforms.console.dconsole;
 
 import std.stdio;
 
