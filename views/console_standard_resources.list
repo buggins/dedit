@@ -1,10 +1,4 @@
 res/console_theme_default.xml
-res/scrollbar_btn_background.xml
-res/scrollbar_btn_transparent_background.xml
-res/scrollbar_btn_background_normal.tim
-res/scrollbar_btn_background_disabled.tim
-res/scrollbar_btn_background_pressed.tim
-res/scrollbar_btn_background_hover.tim
 res/scrollbar_btn_left.tim
 res/scrollbar_btn_right.tim
 res/scrollbar_btn_up.tim

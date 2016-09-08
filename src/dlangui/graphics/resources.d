@@ -464,6 +464,11 @@ static if (BACKEND_CONSOLE) {
                     textColor: [0xFF0000],
                     ninepatch: [1,1,1,1]
                 }
+        
+        Short form:
+
+    {'╔═╗' '║ ║' '╚═╝' bc 0x000080 tc 0xFF0000 ninepatch 1 1 1 1}
+
     */
     class TextDrawable : Drawable {
         import dlangui.platforms.console.consoleapp : ConsoleDrawBuf;
@@ -475,6 +480,7 @@ static if (BACKEND_CONSOLE) {
         private Rect _padding;
         private Rect _ninePatch;
         private bool _tiled;
+        private bool _stretched;
         private bool _hasNinePatch;
         this(int dx, int dy, dstring text, uint textColor, uint bgColor) {
             _width = dx;
@@ -497,13 +503,22 @@ static if (BACKEND_CONSOLE) {
         }
         /**
            Create from text drawable source file format:
-           text: "text line 1"
+           { 
+            text: 
+           "text line 1"
            "text line 2"
            "text line 3"
            backgroundColor: 0xFFFFFF [,0xFFFFFF]*
            textColor: 0x000000, [,0x000000]*
            ninepatch: left,top,right,bottom
            padding: left,top,right,bottom
+            }
+           
+           Text lines may be in "" or '' or `` quotes.
+           bc can be used instead of backgroundColor, tc instead of textColor
+
+           Sample short form:
+           { 'line1' 'line2' 'line3' bc 0xFFFFFFFF tc 0x808080 stretch }
         */
         this(dstring src) {
             import dlangui.dml.tokenizer;
@@ -525,12 +540,16 @@ static if (BACKEND_CONSOLE) {
             uint[] nine;
             for (int i; i < tokens.length; i++) {
                 if (tokens[i].type == TokenType.ident) {
-                    if (tokens[i].text == "backgroundColor")
+                    if (tokens[i].text == "backgroundColor" || tokens[i].text == "bc")
                         mode = Mode.BackgroundColor;
-                    else if (tokens[i].text == "textColor")
+                    else if (tokens[i].text == "textColor" || tokens[i].text == "tc")
                         mode = Mode.TextColor;
                     else if (tokens[i].text == "text")
                         mode = Mode.Text;
+                    else if (tokens[i].text == "stretch")
+                        _stretched = true;
+                    else if (tokens[i].text == "tile")
+                        _tiled = true;
                     else if (tokens[i].text == "padding") {
                         mode = Mode.Padding;
                     } else if (tokens[i].text == "ninepatch") {
@@ -538,11 +557,12 @@ static if (BACKEND_CONSOLE) {
                         mode = Mode.NinePatch;
                     } else
                         mode = Mode.None;
-                }
-                if (tokens[i].type == TokenType.integer) {
+                } else if (tokens[i].type == TokenType.integer) {
                     switch(mode) {
                         case Mode.BackgroundColor: _bgColors ~= tokens[i].intvalue; break;
-                        case Mode.TextColor: _textColors ~= tokens[i].intvalue; break;
+                        case Mode.TextColor: 
+                        case Mode.Text: 
+                            _textColors ~= tokens[i].intvalue; break;
                         case Mode.Padding: pad ~= tokens[i].intvalue; break;
                         case Mode.NinePatch: nine ~= tokens[i].intvalue; break;
                         default:
@@ -619,7 +639,7 @@ static if (BACKEND_CONSOLE) {
             ConsoleDrawBuf buf = cast(ConsoleDrawBuf)drawbuf;
             if (!buf) // wrong draw buffer
                 return;
-            if (_hasNinePatch || _tiled) {
+            if (_hasNinePatch || _tiled || _stretched) {
                 for (int y = 0; y < rc.height; y++) {
                     for (int x = 0; x < rc.width; x++) {
                         int srcx = wrapNinePatch(x, rc.width, _width, _ninePatch.left, _ninePatch.right);

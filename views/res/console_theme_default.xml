@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <theme id="theme_default" 
-        fontSize="10pt" 
-        fontFace="Helvetica Neue,Verdana,Arial,DejaVu Sans,Liberation Sans,Helvetica,Roboto,Droid Sans"
+        fontSize="1" 
+        fontFace="Arial"
         fontFamily="SansSerif"
+        textColor="#808080"
         >
-    <color id="window_background" value="#FFFFFF"/>
+    <color id="window_background" value="#000000"/>
     <color id="dialog_background" value="#EEEEEE"/>
     <color id="edit_background" value="#FFFFFF"/>
     <color id="edit_caret" value="#000000"/>
@@ -30,12 +31,14 @@
     <color id="grid_cell_background_header_selected" value="#80FFC040"/>
 
     <style id="BUTTON"
-        backgroundImageId="btn_background"
+        backgroundImageId="{' ' bc 0x808080 stretch}"
         align="Center"
-        margins="3pt,3pt,3pt,3pt"
-        focusRectColors="#000"
         textFlags="UnderlineHotKeys"
+	textColor="#000000"
+        margins="0,0,1,0"
         >
+        <state state_pressed="true" textColor="#FFFFFF" backgroundImageId="{' ' bc 0xC0C0C0 stretch}"/>
+        <state state_enabled="true" state_focused="true" backgroundImageId="{' ' bc 0xFFFF00 stretch}"/>
         <state state_enabled="true" state_hovered="true" textColor="#006080"/>
         <state state_enabled="false" textColor="#80000000"/>
     </style>
@@ -49,11 +52,10 @@
         />
     <style id="BUTTON_LABEL"
         layoutWidth="FILL_PARENT"
-        margins="2pt,2pt,2pt,2pt"
         align="Left|VCenter"
         textFlags="UnderlineHotKeys"
         >
-        <state state_enabled="false" textColor="#80000000"/>
+        <state state_enabled="false" textColor="#C0C0C0"/>
         <state state_enabled="true" state_hovered="true" textColor="#006080"/>
     </style>
     <style id="BUTTON_LABEL_LINK" parent="BUTTON_LABEL"
@@ -63,11 +65,9 @@
         <state state_enabled="true" state_hovered="true" textColor="#8080FF" textFlags="Underline"/>
     </style>
     <style id="BUTTON_IMAGE"
-        margins="2,2,2,2"
         align="Center"
         />
     <style id="SWITCH"
-        margins="2,2,2,2"
         align="Center"
         backgroundImageId="switch"
         />
@@ -102,15 +102,15 @@
         <state state_enabled="true" state_hovered="true" textColor="#006080"/>
     </style>
     <style id="TEXT"
-        margins="2,2,2,2"
-        padding="1,1,1,1"
+        margins="0,0,1,0"
+        padding="1,0,1,0"
         align="Left|VCenter"
         >
         <state state_enabled="false" textColor="#A0000000"/>
     </style>
     <style id="MULTILINE_TEXT"
-        margins="2,2,2,2"
-        padding="1,1,1,1"
+        margins="0,0,0,0"
+        padding="0,0,0,0"
         align="Left|VCenter"
         maxLines = "0"
         >
@@ -143,24 +143,25 @@
     <drawable id="scrollbar_indicator_vertical" value="scrollbar_indicator_vertical"/>
     <drawable id="scrollbar_indicator_horizontal" value="scrollbar_indicator_horizontal"/>
     <style id="SCROLLBAR"
-        backgroundColor="#FFFFFFFF"
         align="Center"
         />
     <style id="SCROLLBAR_BUTTON"
-        backgroundImageId="scrollbar_btn_background"
+        backgroundImageId="{' ' bc 0x808000 stretch}"
         align="Center"
-        />
+        >
+        <state state_pressed="true" backgroundImageId="{' ' bc 0x808080 stretch}"/>
+    </style>
     <style id="SCROLLBAR_BUTTON_TRANSPARENT"
-        backgroundImageId="scrollbar_btn_transparent_background"
+        backgroundImageId="{' ' stretch}"
         align="Center"
         />
     <style id="SLIDER"
         />
     <style id="PAGE_SCROLL"
-        backgroundColor="#FFFFFFFF"
+        backgroundImageId="{'░' 0x808000 stretch}"
         >
-        <state state_pressed="true" backgroundColor="#C0404080"/>
-        <state state_hovered="true" backgroundColor="#F0404080"/>
+        <state state_pressed="true" backgroundImageId="{'░' 0x808080 stretch}"/>
+        <state state_hovered="true" backgroundImageId="{'░' 0x808000 stretch}"/>
     </style>
 
     <style id="TAB_DOWN_DARK"
@@ -218,55 +219,67 @@
 
     <style id="MAIN_MENU"
         layoutWidth="FILL_PARENT"
-        backgroundImageId="main_menu_background"
+        backgroundImageId="{' ' bc 0x808080 stretch}"
 	layoutWeight="0"
+	textColor="#000000"
         />
     <style id="MAIN_MENU_ITEM"
-        padding="4,2,4,2"
-        backgroundImageId="main_menu_item_background"
+        padding="0,0,0,0"
+        backgroundImageId="{' ' bc 0x808080 stretch}"
         textFlags="Parent"
-        />
-    <style id="MENU_ITEM"
-        backgroundImageId="menu_item_background"
-        padding="4,2,4,2"
         >
+        <state state_selected="true" backgroundImageId="{' ' bc 0xFFFFFF stretch}"/>
+    </style>
+    <style id="MENU_ITEM"
+	textColor="#000000"
+        backgroundImageId="{' ' bc 0x808080 stretch}"
+        padding="0,0,0,0"
+        >
+        <state state_selected="true" backgroundImageId="{' ' bc 0xFFFFFF stretch}"/>
     </style>
     <style id="MENU_ICON"
-        margins="2,2,2,2"
+        margins="0,0,0,0"
         align="Left|VCenter"
         >
         <state state_enabled="false" alpha="160"/>
     </style>
     <style id="MENU_LABEL"
-        margins="4,2,4,2"
+	textColor="#000000"
+        margins="1,0,1,0"
         align="Left|VCenter"
         textFlags="UnderlineHotKeys"
         >
-        <state state_enabled="false" textColor="#80404040"/>
+        <state state_enabled="false" textColor="#C0C0C0"/>
     </style>
     <style id="MAIN_MENU_LABEL"
-        margins="4,2,4,2"
+	textColor="#000000"
+        margins="1,0,1,0"
         align="Left|VCenter"
         textFlags="Parent"
         >
-        <state state_enabled="false" textColor="#80404040"/>
+        <state state_enabled="false" textColor="#C0C0C0"/>
     </style>
     <style id="MENU_ACCEL"
-        margins="4,2,4,2"
+        margins="1,0,1,0"
         align="Left|VCenter"
+        textColor="#000000"
         >
-        <state state_enabled="false" textColor="#80404040"/>
+        <state state_enabled="false" textColor="#C0C0C0"/>
     </style>
     <style id="TRANSPARENT_BUTTON_BACKGROUND"
         backgroundImageId="btn_background_transparent"
-        padding="4,2,4,2"
+        padding="0,0,0,0"
         />
     <style id="POPUP_MENU"
-        backgroundImageId="popup_menu_background_normal"
+        backgroundImageId="{'╔═╗' '║ ║' '╚═╝' bc 0x808080 tc 0xC0C0C0 ninepatch 1 1 1 1 padding 1 1 1 1}"
         />
     <style id="LIST_ITEM"
-        backgroundImageId="list_item_background"
-        />
+        >
+        <state state_pressed="true" backgroundImageId="{'░' 0x808000 stretch}" textColor="#000000"/>
+        <state state_selected="true" state_focused="true" backgroundImageId="{' ' bc 0xFFFF00 stretch}" textColor="#000000"/>
+        <state state_selected="true" backgroundImageId="{' ' bc 0x808080 stretch}" textColor="#000000"/>
+        <state state_hovered="true" textColor="#800080"/>
+    </style>
 
     <style id="COMBO_BOX"
         backgroundImageId="combobox_background"
@@ -287,28 +300,28 @@
         />
 
     <style id="EDIT_LINE"
-        backgroundImageId="editbox_background"
-        padding="4,4,4,4"
-        margins="2,2,2,2"
-        minWidth="40"
+        backgroundImageId="{text:[' '], textColor:[0xC0C0C0], backgroundColor:[0xFFFFFFFF], stretch: true}"
+        padding="0,0,0,0"
+        margins="0,0,0,0"
+        minWidth="5"
         />
     <style id="EDIT_BOX"
         fontFace="Menlo,Consolas,DejaVuSansMono,Lucida Sans Typewriter,Courier New,Lucida Console"
         backgroundImageId="editbox_background"
-        padding="2,2,2,2"
-        margins="2,2,2,2"
-        minWidth="100"
-        minHeight="60"
+        padding="0,0,0,0"
+        margins="0,0,0,0"
+        minWidth="8"
+        minHeight="3"
         layoutWidth="FILL_PARENT"
         layoutHeight="FILL_PARENT"
         />
     <style id="EDIT_BOX_NO_FRAME"
         fontFace="Menlo,Consolas,DejaVuSansMono,Lucida Sans Typewriter,Courier New,Lucida Console"
         backgroundColor="#FFFFFF"
-        padding="2,2,2,2"
-        margins="2,2,2,2"
-        minWidth="100"
-        minHeight="60"
+        padding="0,0,0,0"
+        margins="0,0,0,0"
+        minWidth="8"
+        minHeight="3"
         layoutWidth="FILL_PARENT"
         layoutHeight="FILL_PARENT"
         />
